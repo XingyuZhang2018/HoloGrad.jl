@@ -4,7 +4,8 @@ module qgh
     using FFTW
     using LinearAlgebra
     using Statistics
-    using Parameters 
+    using Parameters
+    using Plots
     using Printf
     using Zygote
     
@@ -21,4 +22,5 @@ module qgh
 
     include("configuration.jl")
     include("wgs.jl")
+    include("utils.jl")
 end

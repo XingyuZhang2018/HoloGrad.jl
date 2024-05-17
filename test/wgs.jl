@@ -21,12 +21,13 @@ using Test
     @test A ≈ C
 end
 
-@testset "benchmark" begin
+@testset "wgs" begin
     Random.seed!(100)
-    mask = zeros(Bool, 1024, 1024)
-    mask[100:20:924, 100:20:924] .= true
+    mask = zeros(Bool, 10, 10)
+    mask[2:2:8, 2:2:8] .= true
     layout = GridLayout(mask)
-    slm = SLM(1024)
-    algorithm = WGS(niters = 1000)
-    match_image(layout, slm, algorithm)
+    slm = SLM(10)
+    algorithm = WGS()
+    slm, cost = match_image(layout, slm, algorithm)
+    @test cost < 1e-6
 end
