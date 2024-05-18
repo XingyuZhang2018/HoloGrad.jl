@@ -11,9 +11,10 @@ module qgh
     
     export GridLayout, SLM
     export match_image, WGS
+    export plot
     module Defaults
         const atype = Array 
-        const maxiter = 100
+        const maxiter = 1000
         const tol = 1e-12
         const verbose = true
         const infolder = "./data/"
@@ -23,4 +24,5 @@ module qgh
     include("configuration.jl")
     include("wgs.jl")
     include("utils.jl")
+    include("fixedpoint.jl")
 end

@@ -37,8 +37,10 @@ function extract_locations(layout::GridLayout, m::Array)
 end
 
 function embed_locations(layout::GridLayout, v::Array)
-    A = zeros(eltype(v), size(layout.mask)...)
-    A[layout.mask] .= v
-    return A
+    # A = zeros(eltype(v), size(layout.mask)...)
+    A = Zygote.Buffer(v, size(layout.mask)...)
+    A[:] = zeros(eltype(v), size(layout.mask)...)
+    A[layout.mask] = v
+    return copy(A)
 end
 

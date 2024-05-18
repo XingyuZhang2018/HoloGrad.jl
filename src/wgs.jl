@@ -1,7 +1,7 @@
 @with_kw struct WGS
-    niters::Int = 100 # the number of iterations.
-    ratio_fixphase::Float64 = 0.8 # fix phase when `number of iteration > ratio_fixphase * niters`.
+    ratio_fixphase::Float64 = 0.8 # fix phase when `number of iteration > ratio_fixphase * maxiter`.
     show_every::Int = 10 # show the cost every `show_every` iterations.
+    maxiter::Int = Defaults.maxiter # the number of iterations.
     tol::Float64 = Defaults.tol # the tolerance of the cost.
     verbose::Bool = Defaults.verbose # if print the cost every `show_every` iterations.
 end
@@ -21,6 +21,7 @@ end
     Returns:
         SLM: the optimized SLM.
         cost: the cost of the optimized SLM.
+        target_A_reweight: the reweighted target amplitude.
 
     References:
         https://www.osapublishing.org/ol/abstract.cfm?uri=ol-44-12-3178
@@ -38,7 +39,7 @@ function match_image(layout::Layout, slm::SLM, algorithm::WGS)
     # ------ Iterative Optimization Start --------
     print("Start $algorithm")
     t0 = time()
-    for i in 1:algorithm.niters
+    for i in 1:algorithm.maxiter
         target_A_reweight .*= clamp!(mean(trap_A) ./ trap_A, 0.1, 10)
 
         # image plane
@@ -54,10 +55,9 @@ function match_image(layout::Layout, slm::SLM, algorithm::WGS)
         image = fftshift(fft(fourier))
         trap = extract_locations(layout, image)
         trap_A = normalize!(abs.(trap))
-        trap_ϕ_new = angle.(trap)
 
-        if i < algorithm.niters * algorithm.ratio_fixphase
-            trap_ϕ = trap_ϕ_new
+        if i < algorithm.maxiter * algorithm.ratio_fixphase
+            trap_ϕ = angle.(trap)
         end
 
         if algorithm.verbose && (i % algorithm.show_every == 0)
@@ -71,7 +71,7 @@ function match_image(layout::Layout, slm::SLM, algorithm::WGS)
 
     t1 = time()
     stdmean = compute_cost(trap_A)
-    print(@sprintf("time = %.2f\tcost = %.3e\n", (t1-t0)/algorithm.niters, stdmean))
+    print(@sprintf("Finish WGS\n  time = %.2f\tcost = %.3e\n", (t1-t0)/algorithm.maxiter, stdmean))
 
-    return SLM(slm.A, ϕ, slm.SLM2π), stdmean
+    return SLM(slm.A, ϕ, slm.SLM2π), stdmean, target_A_reweight
 end
