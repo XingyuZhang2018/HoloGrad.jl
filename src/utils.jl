@@ -48,3 +48,13 @@ function plot(slm::SLM)
     image = fftshift(fft(fourier))
     heatmap(abs.(image))
 end
+
+function plot(slms)
+    p = Plots.plot(layout=(1, length(slms)))
+    for i in 1:length(slms)
+        fourier = slms[i].A .* exp.(slms[i].ϕ * (2im * π / slms[i].SLM2π))
+        image = fftshift(fft(fourier))
+        Plots.heatmap!(p[i], abs.(image), colorbar=false, aspect_ratio=:equal, ticks=false, yticks=false)
+    end
+    heatmap!(p, size=(100*length(slms), 100))
+end
