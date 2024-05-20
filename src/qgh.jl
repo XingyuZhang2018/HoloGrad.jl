@@ -10,6 +10,7 @@ module qgh
     using Zygote
     
     import Base: intersect, union, setdiff
+    import Plots: plot
     
     export GridLayout, SLM
     export match_image, WGS

@@ -7,7 +7,7 @@ let
     Random.seed!(100)
 
     mask = zeros(Bool, 100, 100)
-    mask[20:20:80, 20:20:80] .= true
+    mask[20:20:80, 20:20:60] .= true
     layout = GridLayout(mask)
     slm = SLM(100)
     algorithm = WGS()
@@ -15,7 +15,7 @@ let
     @test cost < 1e-6
 
     mask = zeros(Bool, 100, 100)
-    mask[20:20:80, 40:20:100] .= true
+    mask[20:20:80, 40:20:80] .= true
     layout_new = GridLayout(mask)
     slms = []
     for α in 0:0.1:1

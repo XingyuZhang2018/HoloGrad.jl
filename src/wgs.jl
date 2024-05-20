@@ -28,7 +28,7 @@ end
 """
 function match_image(layout::Layout, slm::SLM, algorithm::WGS)
     # initial image space information
-    field = slm.A .* exp.(1im * slm.ϕ)
+    field = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
     image = fftshift(fft(field))
     trap = extract_locations(layout, image)
     trap_A = normalize!(abs.(trap))
@@ -92,7 +92,7 @@ end
         layout (Layout): specify the layout in the image plane
         layout_new (Layout): specify the new layout in the image plane
         slm (Tensor): the (fixed) normalized amplitude and the phase in the SLM plane,
-        α (Real): the weight of the new layout in the optimization,
+        α (Real): the weight of the new layout in the optimization, 0<=α<=1.
         algorithm (WGS): the algorithm parameters.
 
     Returns:
@@ -103,7 +103,7 @@ end
 """
 function match_image(layout::Layout, layout_new::Layout, slm::SLM, α::Real, algorithm::WGS)
     # initial image space information
-    field = slm.A .* exp.(1im * slm.ϕ)
+    field = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
     image = fftshift(fft(field))
     layout_union, layout_disappear, layout_appear = deal_layout(layout, layout_new)
     disapperindex = extract_locations(layout_union, layout_disappear.mask)
