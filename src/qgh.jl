@@ -9,6 +9,8 @@ module qgh
     using Printf
     using Zygote
     
+    import Base: intersect, union, setdiff
+    
     export GridLayout, SLM
     export match_image, WGS
     export plot

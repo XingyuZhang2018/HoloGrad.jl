@@ -32,6 +32,21 @@ struct GridLayout <: Layout
     end
 end
 
+function union(A::GridLayout, B::GridLayout)
+    mask = Array{Bool}(A.mask .| B.mask)
+    return GridLayout(mask)
+end
+
+function intersect(A::GridLayout, B::GridLayout)
+    mask = Array{Bool}(A.mask .& B.mask)
+    return GridLayout(mask)
+end
+
+function setdiff(A::GridLayout, B::GridLayout)
+    mask = Array{Bool}(A.mask .& .~(B.mask))
+    return GridLayout(mask)
+end
+
 function extract_locations(layout::GridLayout, m::Array)
     return m[layout.mask]
 end

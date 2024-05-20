@@ -14,6 +14,35 @@ function compute_cost(A::AbstractArray)
     return std_mean
 end
 
+"""
+compute the cost from image amplitude.
+
+Args:
+    A (Array): the amplitude on target traps (not normalized),
+    appearindex (Array): the index of appearing traps,
+    disappearindex (Array): the index of disappearing traps,
+    α (Real): the ratio of appearing traps.
+
+Returns:
+    * std/mean, the smaller, the more evenly distributed target traps are.
+
+Warning:
+    Lose efficacy when α is close to 0 or 1.
+
+"""
+function compute_cost(A::AbstractArray, appearindex, disappearindex, α)
+    t = abs2.(A)
+    mean = Statistics.mean(t)
+    t[disappearindex] ./= (1 - α)^2
+    t[appearindex] ./= α^2
+    std_mean1 = std(t) / mean
+
+    t = t[.!(appearindex .| disappearindex)] # remove appearing and disappearing traps, only consider the intersected traps
+    std_mean2 = std(t) / mean
+
+    return isnan(std_mean1) ? std_mean2 : min(std_mean1, std_mean2)
+end
+
 function plot(slm::SLM)
     fourier = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
     image = fftshift(fft(fourier))
