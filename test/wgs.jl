@@ -69,6 +69,9 @@ end
     mask = zeros(Bool, 10, 10)
     mask[2:2:8, 4:2:10] .= true
     layout_new = GridLayout(mask)
-    slm, = match_image(layout, layout_new, slm, 0.0, algorithm)
+    slm, cost, target_A_reweight = match_image(layout, layout_new, slm, 0.0, algorithm)
     @test cost < 1e-6
+
+    slm_new, = match_image(layout, layout_new, slm, 0.0, target_A_reweight, algorithm)
+    @test slm_new.ϕ ≈ slm.ϕ
 end

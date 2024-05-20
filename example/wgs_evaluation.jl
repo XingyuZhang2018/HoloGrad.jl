@@ -19,9 +19,12 @@ let
     layout_new = GridLayout(mask)
     slms = []
     for α in 0:0.1:1
-        slm, = match_image(layout, layout_new, slm, α, algorithm)
+        if α == 0
+            slm, cost, target_A_reweight = match_image(layout, layout_new, slm, α, algorithm)
+        else
+            slm, cost, target_A_reweight = match_image(layout, layout_new, slm, α, target_A_reweight, algorithm)
+        end
         push!(slms, slm)
     end
-    @test cost < 1e-6
-    qgh.plot(slms)
+    plot(slms)
 end

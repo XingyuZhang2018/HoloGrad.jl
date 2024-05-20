@@ -102,6 +102,12 @@ end
 
 """
 function match_image(layout::Layout, layout_new::Layout, slm::SLM, α::Real, algorithm::WGS)
+    layout_union, = deal_layout(layout, layout_new)
+    target_A_reweight = ones(layout_union.ntrap) / sqrt(layout_union.ntrap)
+    match_image(layout, layout_new, slm, α, target_A_reweight, algorithm)
+end
+
+function match_image(layout::Layout, layout_new::Layout, slm::SLM, α::Real, target_A_reweight, algorithm::WGS)
     # initial image space information
     field = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
     image = fftshift(fft(field))
@@ -111,8 +117,8 @@ function match_image(layout::Layout, layout_new::Layout, slm::SLM, α::Real, alg
     trap = extract_locations(layout_union, image)
     trap_A = normalize!(abs.(trap))
     trap_ϕ = angle.(trap)
-    target_A_reweight = ones(layout_union.ntrap) / sqrt(layout_union.ntrap)
     ϕ = similar(slm.ϕ)
+    target_A_reweight[apperindex] .= mean(target_A_reweight) * α
 
     # ------ Iterative Optimization Start --------
     print("Start $algorithm")
@@ -123,6 +129,7 @@ function match_image(layout::Layout, layout_new::Layout, slm::SLM, α::Real, alg
         reweight[apperindex] .*= α
         target_A_reweight .*= reweight
         trap_A, trap_ϕ_new, ϕ = one_step!(layout_union, slm, target_A_reweight, trap_ϕ, algorithm)
+
         if i < algorithm.maxiter * algorithm.ratio_fixphase
             trap_ϕ = trap_ϕ_new
         end
