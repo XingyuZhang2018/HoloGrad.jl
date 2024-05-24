@@ -1,7 +1,7 @@
 using FFTW
 using LinearAlgebra
 using qgh
-using qgh: deal_layout, extract_locations
+using qgh: deal_layout, extract_locations, padding_extract
 using Random
 using Test
 
@@ -39,7 +39,25 @@ end
     layout = GridLayout(mask)
     slm = SLM(10)
     algorithm = WGS(ifpadding = true)
-    slm, cost = match_image(layout, slm, algorithm)
+    slm_padding, cost = match_image(layout, slm, algorithm)
+    @test cost < 1e-6
+
+    # with cft
+    mask = zeros(Bool, 20, 20)
+    mask[2:2:8, 2:2:8] .= true
+    layout = GridLayout(mask)
+    slm = SLM(10)
+    algorithm = WGS(ifcft = true)
+    slm_cft, cost = match_image(layout, slm, algorithm)
+    @test cost < 1e-6
+
+    # with matrixft
+    mask = zeros(Bool, 20, 20)
+    mask[2:2:8, 2:2:8] .= true
+    layout = GridLayout(mask)
+    slm = SLM(10)
+    algorithm = WGS(ifmatrixft = true)
+    slm_matrixft, cost = match_image(layout, slm, algorithm)
     @test cost < 1e-6
 end
 

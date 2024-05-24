@@ -7,6 +7,7 @@ module qgh
     using Parameters
     using Plots
     using Printf
+    using OMEinsum
     using Zygote
     
     import Base: intersect, union, setdiff

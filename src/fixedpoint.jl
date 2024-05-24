@@ -1,9 +1,9 @@
 function fixed_point_map(slm::SLM, target_A_reweight)
     field = slm.A .* exp.(2im * π * slm.ϕ / slm.SLM2π)
-    image = fftshift(fft(field))
+    image = fft(field)
     trap_ϕ = angle.(image)
     v_forced_trap = target_A_reweight .* exp.(1im * trap_ϕ)
-    t = ifft(ifftshift(v_forced_trap))
+    t = ifft(v_forced_trap)
     ϕ = (angle.(t) ) .* (0.5 / π) * slm.SLM2π
     return ϕ
 end
