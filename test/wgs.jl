@@ -24,11 +24,21 @@ end
 
 @testset "wgs" begin
     Random.seed!(100)
+    # without padding
     mask = zeros(Bool, 10, 10)
     mask[2:2:8, 2:2:8] .= true
     layout = GridLayout(mask)
     slm = SLM(10)
     algorithm = WGS()
+    slm, cost = match_image(layout, slm, algorithm)
+    @test cost < 1e-6
+
+    # with padding
+    mask = zeros(Bool, 20, 20)
+    mask[2:2:8, 2:2:8] .= true
+    layout = GridLayout(mask)
+    slm = SLM(10)
+    algorithm = WGS(ifpadding = true)
     slm, cost = match_image(layout, slm, algorithm)
     @test cost < 1e-6
 end

@@ -3,6 +3,7 @@
     show_every::Int = 10 # show the cost every `show_every` iterations.
     maxiter::Int = Defaults.maxiter # the number of iterations.
     tol::Float64 = Defaults.tol # the tolerance of the cost.
+    ifpadding::Bool = false # if directly padding then use fft
     verbose::Bool = Defaults.verbose # if print the cost every `show_every` iterations.
 end
 
@@ -28,20 +29,21 @@ end
 """
 function match_image(layout::Layout, slm::SLM, algorithm::WGS)
     # initial image space information
-    field = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
+    ϵ = size(slm.A, 1) / size(layout.mask, 1)
+    ϵ != 1 && println("The layout size is lager the slm size, and padding factor ϵ = $ϵ")
+    field = algorithm.ifpadding ? padding(slm.A, ϵ) .* exp.(padding(slm.ϕ, ϵ) * (2im * π / slm.SLM2π)) : slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
     image = fftshift(fft(field))
     trap = extract_locations(layout, image)
     trap_A = normalize!(abs.(trap))
     trap_ϕ = angle.(trap)
     target_A_reweight = ones(layout.ntrap) / sqrt(layout.ntrap)
-    ϕ = similar(slm.ϕ)
+    ϕ = similar(image)
 
     # ------ Iterative Optimization Start --------
     print("Start $algorithm")
     t0 = time()
     for i in 1:algorithm.maxiter
         reweight = clamp!(mean(trap_A) ./ trap_A, 0.1, 10)
-        # reweight[1:4] .*= 0.5
         target_A_reweight .*= reweight
         trap_A, trap_ϕ_new, ϕ = one_step!(layout, slm, target_A_reweight, trap_ϕ, algorithm)
         if i < algorithm.maxiter * algorithm.ratio_fixphase
@@ -73,7 +75,8 @@ function one_step!(layout::Layout, slm::SLM, target_A_reweight, trap_ϕ, ::WGS)
     t = ifft(ifftshift(v_forced_image))
     # ϕ = round.((angle.(t) .+ π) .* (0.5 / π) * slm.SLM2π)
     ϕ = (angle.(t) ) .* (0.5 / π) * slm.SLM2π
-    fourier = slm.A .* exp.(2im * π * ϕ / slm.SLM2π)
+    ϵ = size(slm.A, 1) / size(layout.mask, 1)
+    fourier = padding(slm.A, ϵ) .* exp.(2im * π * ϕ  / slm.SLM2π)
 
     image = fftshift(fft(fourier))
     trap = extract_locations(layout, image)
