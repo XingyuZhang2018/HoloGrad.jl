@@ -3,9 +3,7 @@
     show_every::Int = 10 # show the cost every `show_every` iterations.
     maxiter::Int = Defaults.maxiter # the number of iterations.
     tol::Float64 = Defaults.tol # the tolerance of the cost.
-    ifpadding::Bool = false # if directly padding then use fft
-    ifcft::Bool = false # if use cft instead of fft
-    ifmatrixft::Bool = false # if use matrix fourier transform
+    ft_method::Symbol = :smft # the method to compute the Fourier transform.
     verbose::Bool = Defaults.verbose # if print the cost every `show_every` iterations.
 end
 
@@ -30,21 +28,11 @@ end
         https://www.osapublishing.org/ol/abstract.cfm?uri=ol-44-12-3178
 """
 function match_image(layout::Layout, slm::SLM, algorithm::WGS)
-    algorithm.ifpadding && algorithm.ifcft && throw(ArgumentError("ifpadding and ifcft cannot be true at the same time"))
-
     # initial image space information
     ϵ = size(slm.A, 1) / size(layout.mask, 1)
     ϵ != 1 && println("The layout size is lager the slm size, and padding factor ϵ = $ϵ")
-    field = algorithm.ifpadding ? padding(slm.A, ϵ) .* exp.(padding(slm.ϕ, ϵ) * (2im * π / slm.SLM2π)) : slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
-    if algorithm.ifcft
-        image = ft_enlarge(field, ϵ)
-        trap = extract_locations(layout, image)
-    elseif algorithm.ifmatrixft
-        trap = ft(layout, field)
-    else
-        image = fft(field)
-        trap = extract_locations(layout, image)
-    end
+    field = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
+    trap = ft(layout, field, ϵ, Val(algorithm.ft_method))
     trap_A = normalize!(abs.(trap))
     trap_ϕ = angle.(trap)
     target_A_reweight = ones(layout.ntrap) / sqrt(layout.ntrap)
@@ -74,45 +62,19 @@ function match_image(layout::Layout, slm::SLM, algorithm::WGS)
     stdmean = compute_cost(trap_A)
     print(@sprintf("Finish WGS\n  time = %.2f ms\tcost = %.3e\n", (t1-t0)/algorithm.maxiter*1000, stdmean))
 
-    if algorithm.ifpadding
-        slm = SLM(padding(slm.A, ϵ), ϕ, slm.SLM2π)
-    elseif algorithm.ifcft || algorithm.ifmatrixft
-        slm = SLM(padding(slm.A, ϵ), padding(ϕ, ϵ), slm.SLM2π)
-    else
-        slm = SLM(slm.A, ϕ, slm.SLM2π)
-    end
-
-    return slm, stdmean, target_A_reweight
+    return SLM(slm.A, ϕ, slm.SLM2π), stdmean, target_A_reweight
 end
 
 function one_step!(layout::Layout, slm::SLM, target_A_reweight, trap_ϕ, algorithm::WGS)
     # image plane
     v_forced_trap = normalize!(target_A_reweight) .* exp.(1im * trap_ϕ) # regenerate image
-    v_forced_image = algorithm.ifmatrixft ? v_forced_trap : embed_locations(layout, v_forced_trap)
-
     # compute phase front at SLM
     ϵ = size(slm.A, 1) / size(layout.mask, 1)
-    # t = algorithm.ifcft ? ift_reduce(v_forced_image, ϵ) : ifft(v_forced_image)
-    if algorithm.ifcft
-        t = ift_reduce(v_forced_image, ϵ)
-    elseif algorithm.ifmatrixft
-        t = ift(layout, v_forced_image, ϵ)
-    else
-        t = ifft(v_forced_image)
-    end
-    # ϕ = round.((angle.(t) .+ π) .* (0.5 / π) * slm.SLM2π)
+    t = ift(layout, v_forced_trap, ϵ, Val(algorithm.ft_method))
     ϕ = (angle.(t) ) .* (0.5 / π) * slm.SLM2π
-    fourier = algorithm.ifpadding ? padding(slm.A, ϵ) .* exp.(2im * π * ϕ  / slm.SLM2π) : slm.A .* exp.(2im * π * ϕ  / slm.SLM2π)
+    field = slm.A .* exp.(2im * π * ϕ  / slm.SLM2π)
 
-    if algorithm.ifcft
-        image = ft_enlarge(fourier, ϵ)
-        trap = extract_locations(layout, image)
-    elseif algorithm.ifmatrixft
-        trap = ft(layout, fourier)
-    else
-        image = fft(fourier)
-        trap = extract_locations(layout, image)
-    end
+    trap = ft(layout, field, ϵ, Val(algorithm.ft_method))
     trap_A = normalize!(abs.(trap))
     trap_ϕ = angle.(trap)
 

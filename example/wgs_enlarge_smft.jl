@@ -16,8 +16,8 @@ let
     # heatmap(mask) # show the target image
     layout = GridLayout(mask)
     slm = SLM(Nx)
-    algorithm = WGS(ifcft = true)
+    algorithm = WGS(ft_method = :smft)
     slm, cost, target_A_reweight = match_image(layout, slm, algorithm)
     # heatmap(embed_locations(layout, target_A_reweight)) # show the original obtained target image
-    plot(slm)
+    plot(padding(slm, Nx/Nu))
 end

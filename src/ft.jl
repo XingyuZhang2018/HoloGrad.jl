@@ -1,4 +1,45 @@
 """
+fourier transform functions for SLM optimization.
+
+"""
+function ft(layout, signal, ϵ, ::Val{:fft})
+    image = fft(padding(signal, ϵ))
+    extract_locations(layout, image)
+end
+
+function ft(layout, signal, ϵ, ::Val{:mft})
+    Nx, Ny = size(signal)
+    Nu = Nx ÷ ϵ
+    Nv = Ny ÷ ϵ
+    image = mft(signal, Nu, Nv)
+    extract_locations(layout, image)
+end
+
+function ft(layout, signal, ϵ, ::Val{:smft})
+    smft(layout, signal)
+end
+
+function ift(layout, frequency, ϵ, ::Val{:fft})
+    image = embed_locations(layout, frequency)
+    padding_extract(ifft(image), ϵ)
+end
+
+function ift(layout, frequency, ϵ, ::Val{:mft})
+    image = embed_locations(layout, frequency)
+    Nu, Nv = size(image)
+    Nx = Nu * ϵ
+    Ny = Nv * ϵ
+    imft(image, Nx, Ny)
+end
+
+function ift(layout, frequency, ϵ, ::Val{:smft})
+    Nu, Nv = size(layout.mask)
+    Nx = round(Int, Nu * ϵ)
+    Ny = round(Int, Nv * ϵ)
+    ismft(layout, frequency, Nx, Ny)
+end
+
+"""
 Padding the matrix A with zeros.
 
 Args:
@@ -23,6 +64,12 @@ function padding(A::AbstractArray{T,2}, ϵ) where T
     return A_enlarge
 end
 
+padding(slm::SLM, ϵ) = SLM(padding(slm.A, ϵ), padding(slm.ϕ, ϵ), slm.SLM2π)
+
+"""
+
+"""
+
 function padding_extract(A::AbstractArray{T,2}, ϵ) where T
     ϵ == 1 && return A
     Nu, Nv = size(A)
@@ -31,19 +78,10 @@ function padding_extract(A::AbstractArray{T,2}, ϵ) where T
     return A[((Nu-Nx)÷2+1):((Nu-Nx)÷2+Nx), ((Nv-Ny)÷2+1):((Nv-Ny)÷2+Ny)]
 end
 
-function ft_enlarge(signal, ϵ)
-    Nx, Ny = size(signal)
-    Nu = Nx ÷ ϵ
-    Nv = Ny ÷ ϵ
-    ft_enlarge(signal, Nu, Nv)
-end
-
 """
-    fft_enlarge(signal, Nu, Nv)
-
-Enlarge the signal to a frequency with a larger size.
+    dense matrix fourier transform.
 """
-function ft_enlarge(signal, Nu, Nv)
+function mft(signal, Nu, Nv)
     Nx, Ny = size(signal)
     @assert Nu >= Nx && Nv >= Ny
     u = 0:Nu-1
@@ -55,7 +93,10 @@ function ft_enlarge(signal, Nu, Nv)
     return X * signal * Y
 end
 
-function ft(layout, signal)
+"""
+    sparse matrix fourier transform.
+"""
+function smft(layout, signal)
     Nx, Ny = size(signal)
     mask = layout.mask
     Nu, Nv = size(mask)
@@ -70,19 +111,7 @@ function ft(layout, signal)
     return ein"(ab,bc),ca->a"(X, signal, Y)
 end
 
-function ift_reduce(frequency, ϵ)
-    Nu, Nv = size(frequency)
-    Nx = Nu * ϵ
-    Ny = Nv * ϵ
-    ift_reduce(frequency, Nx, Ny)
-end
-
-"""
-    ifft_reduce(frequency, Nx, Ny)
-
-Reduce the frequency to a signal with a smaller size.
-"""
-function ift_reduce(frequency::AbstractArray{T, 2}, Nx, Ny) where T
+function imft(frequency::AbstractArray{T, 2}, Nx, Ny) where T
     Nu, Nv = size(frequency)
     @assert Nu >= Nx && Nv >= Ny
     u = 0:Nu-1
@@ -94,14 +123,7 @@ function ift_reduce(frequency::AbstractArray{T, 2}, Nx, Ny) where T
     return (X * frequency * Y) / (Nu * Nv)
 end
 
-function ift(layout, F, ϵ)  
-    Nu, Nv = size(layout.mask)
-    Nx = round(Int, Nu * ϵ)
-    Ny = round(Int, Nv * ϵ)
-    ift(layout, F, Nx, Ny)
-end
-
-function ift(layout, F, Nx, Ny)
+function ismft(layout, F::AbstractArray{T, 1}, Nx, Ny) where T
     mask = layout.mask
     Nu, Nv = size(mask)
     @assert Nu >= Nx && Nv >= Ny

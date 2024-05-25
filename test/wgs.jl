@@ -29,7 +29,7 @@ end
     mask[2:2:8, 2:2:8] .= true
     layout = GridLayout(mask)
     slm = SLM(10)
-    algorithm = WGS()
+    algorithm = WGS(ft_method = :fft)
     slm, cost = match_image(layout, slm, algorithm)
     @test cost < 1e-6
 
@@ -38,7 +38,7 @@ end
     mask[2:2:8, 2:2:8] .= true
     layout = GridLayout(mask)
     slm = SLM(10)
-    algorithm = WGS(ifpadding = true)
+    algorithm = WGS(ft_method = :fft)
     slm_padding, cost = match_image(layout, slm, algorithm)
     @test cost < 1e-6
 
@@ -47,16 +47,16 @@ end
     mask[2:2:8, 2:2:8] .= true
     layout = GridLayout(mask)
     slm = SLM(10)
-    algorithm = WGS(ifcft = true)
+    algorithm = WGS(ft_method = :mft)
     slm_cft, cost = match_image(layout, slm, algorithm)
     @test cost < 1e-6
 
-    # with matrixft
+    # # with matrixft
     mask = zeros(Bool, 20, 20)
     mask[2:2:8, 2:2:8] .= true
     layout = GridLayout(mask)
     slm = SLM(10)
-    algorithm = WGS(ifmatrixft = true)
+    algorithm = WGS(ft_method = :smft)
     slm_matrixft, cost = match_image(layout, slm, algorithm)
     @test cost < 1e-6
 end

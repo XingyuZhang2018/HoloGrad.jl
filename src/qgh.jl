@@ -27,7 +27,7 @@ module qgh
 
     include("configuration.jl")
     include("utils.jl")
-    include("cft.jl")
+    include("ft.jl")
     include("wgs.jl")
     include("fixedpoint.jl")
 end

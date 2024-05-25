@@ -11,13 +11,13 @@ let
         285], [408, 242], [431, 211], [446, 159], [461, 108], [431, 
         68], [401, 67], [364, 75], [330, 114], [299, 145], [270, 185], [238,
          196], [211, 151], [183, 117], [156, 87], [119, 60], [82, 51]]
-        mask[512-i[2],i[1]] = true
+        mask[(512-i[2]),i[1]] = true
     end
     # heatmap(mask) # show the target image
     layout = GridLayout(mask)
     slm = SLM(Nx)
-    algorithm = WGS(ifmatrixft = true)
+    algorithm = WGS(ft_method = :mft)
     slm, cost, target_A_reweight = match_image(layout, slm, algorithm)
     # heatmap(embed_locations(layout, target_A_reweight)) # show the original obtained target image
-    plot(slm)
+    plot(padding(slm, Nx/Nu))
 end
