@@ -1,6 +1,14 @@
 """
 fourier transform functions for SLM optimization.
 
+three methods are provided: fft, mft, smft.
+
+    * fft: fast fourier transform.
+
+    * mft: dense matrix fourier transform.
+
+    * smft: sparse matrix fourier transform.
+
 """
 function ft(layout, signal, ϵ, ::Val{:fft})
     image = fft(padding(signal, ϵ))
