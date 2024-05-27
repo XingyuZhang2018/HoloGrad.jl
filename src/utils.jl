@@ -33,7 +33,7 @@ Warning:
 function compute_cost(A::AbstractArray, appearindex, disappearindex, α)
     t = abs2.(A)
     mean = Statistics.mean(t)
-    std_mean2 = (std(t[appearindex]) + std(t[disappearindex])) / mean
+    std_mean2 = (min(std(t[appearindex]), std(t[disappearindex]))) / mean
 
     t[disappearindex] ./= (1 - α)^2
     t[appearindex] ./= α^2
