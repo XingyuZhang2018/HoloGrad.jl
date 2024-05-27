@@ -15,6 +15,12 @@ function SLM(K::Int)
     return SLM(g)
 end
 
+function ϕdiff(A::SLM, B::SLM) 
+    @assert A.SLM2π == B.SLM2π "SLM2π must be the same"
+    diff = mod.(A.ϕ - B.ϕ .+ A.SLM2π/2, A.SLM2π) .- A.SLM2π/2
+    return diff
+end
+
 abstract type Layout end
 """
 Specify the target trap locations as a list of points. The `x` and `y` locations should be normalized in [0, 1].

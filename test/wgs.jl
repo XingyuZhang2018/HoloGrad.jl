@@ -102,4 +102,6 @@ end
 
     slm_new, = match_image(layout, layout_new, slm, 0.0, target_A_reweight, algorithm)
     @test slm_new.ϕ ≈ slm.ϕ
+
+    slm_new, = match_image(layout, layout_new, slm_new, 1.0, target_A_reweight, algorithm)
 end

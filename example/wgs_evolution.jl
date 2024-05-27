@@ -2,6 +2,7 @@ using qgh
 using Random
 
 let
+    include("layout_example.jl")
     Random.seed!(100)
     layout = layout_example(Val(:butterfly); α = 0.0)
     slm = SLM(64)

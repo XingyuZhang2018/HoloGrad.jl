@@ -1,9 +1,10 @@
-function fixed_point_map(slm::SLM, target_A_reweight)
+function fixed_point_map(layout::Layout, slm::SLM, target_A_reweight, algorithm)
     field = slm.A .* exp.(2im * π * slm.ϕ / slm.SLM2π)
-    image = fft(field)
-    trap_ϕ = angle.(image)
+    ϵ = size(slm.A, 1) / size(layout.mask, 1)
+    trap = ft(layout, field, ϵ, Val(algorithm.ft_method))
+    trap_ϕ = angle.(trap)
     v_forced_trap = target_A_reweight .* exp.(1im * trap_ϕ)
-    t = ifft(v_forced_trap)
+    t = ift(layout, v_forced_trap, ϵ, Val(algorithm.ft_method))
     ϕ = (angle.(t) ) .* (0.5 / π) * slm.SLM2π
     return ϕ
 end
@@ -14,29 +15,31 @@ end
 Get the time derivative of the phase in the SLM plan by the implicit function theorem.
 
 """
-function get_dϕdt(slm::SLM, target_A_reweight, dAdt)
-    ∂f∂A = jacobian(x -> fixed_point_map(slm, x), target_A_reweight)[1]
-    ∂f∂ϕ = jacobian(x -> fixed_point_map(SLM(slm.A, x, slm.SLM2π), target_A_reweight), slm.ϕ)[1]
+function get_dϕdt(layout::Layout, slm::SLM, target_A_reweight, dAdt, algorithm)
+    ∂f∂A = jacobian(x -> fixed_point_map(layout, slm, x, algorithm), target_A_reweight)[1]
+    ∂f∂ϕ = jacobian(x -> fixed_point_map(layout, SLM(slm.A, x, slm.SLM2π), target_A_reweight, algorithm), slm.ϕ)[1]
 
     return (I(size(∂f∂ϕ, 1)) - ∂f∂ϕ) \ (∂f∂A * dAdt)
 end
 
-function evolution_slm(layout::Layout, layout_new::Layout, slm::SLM, algorithm, δ=1e-5, dt=1e-5)
-    slm, cost, target_A_reweight = match_image(layout, slm, algorithm)
-    dAdt = reshape(δ * (layout_new.mask - layout.mask), prod(size(slm.A)), 1)
-    target_A_reweight = embed_locations(layout, target_A_reweight)
+function evolution_slm(layout::Layout, layout_new::Layout, slm::SLM, algorithm; iters=5, δ=1e-1, dt=1e-1)
+    slm, cost, target_A_reweight = match_image(layout, layout_new, slm, 0.0, algorithm)
+
+    layout_union, = deal_layout(layout, layout_new)
+    dAdt = reshape(extract_locations(layout_union, (layout_new.mask - layout.mask)), prod(size(target_A_reweight)), )
     ϕ = slm.ϕ
 
-    for i in 1:10
-        target_A_reweight += reshape(dAdt, size(slm.A)) * dt
-        dϕdt = reshape(get_dϕdt(slm, target_A_reweight, dAdt), size(slm.ϕ))
-        # ϕ = fixed_point_map(slm, normalize!(target_A_reweight))
+    slms = [slm]
+    for i in 1:iters
+        @show i
+        # slm, cost, target_A_reweight_new = match_image(layout, layout_new, slm, i/iters, abs.(target_A_reweight), algorithm)
+        dϕdt = reshape(get_dϕdt(layout_union, slm, target_A_reweight, dAdt, algorithm), size(slm.ϕ))
         ϕ += dϕdt * dt
-        # @show norm(dϕdt)
-        if norm(fixed_point_map(SLM(slm.A, ϕ, slm.SLM2π), target_A_reweight) - ϕ) > 1e-5
-            break
-        end
+        slm = SLM(slm.A, ϕ, slm.SLM2π)
+        push!(slms, slm)
+        slm, cost, target_A_reweight = match_image(layout, layout_new, slm, i/iters, abs.(target_A_reweight + dAdt * dt), algorithm)
+        @show target_A_reweight
     end
-    slm = SLM(slm.A, ϕ, slm.SLM2π)
-    return slm
+    
+    return slms
 end

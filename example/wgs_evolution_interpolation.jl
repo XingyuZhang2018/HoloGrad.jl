@@ -3,7 +3,7 @@ using Random
 
 let
     Random.seed!(100)
-
+    include("layout_example.jl")
     layout = layout_example(Val(:butterfly); α = 0.0)
     slm = SLM(64)
     algorithm = WGS(verbose=false)
