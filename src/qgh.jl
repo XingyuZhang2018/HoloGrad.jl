@@ -15,7 +15,7 @@ module qgh
     
     export GridLayout, SLM
     export match_image, WGS
-    export plot
+    export plot, padding
     module Defaults
         const atype = Array 
         const maxiter = 1000

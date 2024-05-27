@@ -74,10 +74,6 @@ end
 
 padding(slm::SLM, ϵ) = SLM(padding(slm.A, ϵ), padding(slm.ϕ, ϵ), slm.SLM2π)
 
-"""
-
-"""
-
 function padding_extract(A::AbstractArray{T,2}, ϵ) where T
     ϵ == 1 && return A
     Nu, Nv = size(A)

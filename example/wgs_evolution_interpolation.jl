@@ -1,24 +1,17 @@
 using qgh
 using Random
-using FFTW
-FFTW.set_num_threads(2)
 
 let
     Random.seed!(100)
 
-    mask = zeros(Bool, 100, 100)
-    mask[20:20:80, 20:20:60] .= true
-    layout = GridLayout(mask)
-    slm = SLM(100)
-    algorithm = WGS()
+    layout = layout_example(Val(:butterfly); α = 0.0)
+    slm = SLM(64)
+    algorithm = WGS(verbose=false)
     slm, cost, target_A_reweight = match_image(layout, slm, algorithm)
-    @test cost < 1e-6
 
-    mask = zeros(Bool, 100, 100)
-    mask[20:20:80, 40:20:80] .= true
-    layout_new = GridLayout(mask)
+    layout_new = layout_example(Val(:butterfly); α = 0.1)
     slms = []
-    for α in 0:0.1:1
+    for α in 0:0.1:1.0
         if α == 0
             slm, cost, target_A_reweight = match_image(layout, layout_new, slm, α, algorithm)
         else
@@ -26,5 +19,5 @@ let
         end
         push!(slms, slm)
     end
-    plot(slms)
+    plot(padding.(slms, 64/512))
 end

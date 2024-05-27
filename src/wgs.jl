@@ -41,6 +41,7 @@ function match_image(layout::Layout, slm::SLM, algorithm::WGS)
     # ------ Iterative Optimization Start --------
     print("Start $algorithm")
     t0 = time()
+    iters = 0
     for i in 1:algorithm.maxiter
         reweight = clamp!(mean(trap_A) ./ trap_A, 0.1, 10)
         target_A_reweight .*= reweight
@@ -49,6 +50,7 @@ function match_image(layout::Layout, slm::SLM, algorithm::WGS)
             trap_ϕ = trap_ϕ_new
         end
 
+        iters += 1
         if algorithm.verbose && (i % algorithm.show_every == 0)
             stdmean = compute_cost(trap_A)
             print(@sprintf("step = %5d\tcost = %.3e\n", i, stdmean))
@@ -60,14 +62,15 @@ function match_image(layout::Layout, slm::SLM, algorithm::WGS)
 
     t1 = time()
     stdmean = compute_cost(trap_A)
-    print(@sprintf("Finish WGS\n  time = %.2f ms\tcost = %.3e\n", (t1-t0)/algorithm.maxiter*1000, stdmean))
+    print(@sprintf("Finish WGS\n  total_time = %.2f s\tsingle_time = %.2f ms\tcost = %.3e\n", (t1-t0), (t1-t0)/iters*1000, stdmean))
 
     return SLM(slm.A, ϕ, slm.SLM2π), stdmean, target_A_reweight
 end
 
 function one_step!(layout::Layout, slm::SLM, target_A_reweight, trap_ϕ, algorithm::WGS)
     # image plane
-    v_forced_trap = normalize!(target_A_reweight) .* exp.(1im * trap_ϕ) # regenerate image
+    v_forced_trap = normalize!(target_A_reweight) .* exp.(1im * trap_ϕ) 
+
     # compute phase front at SLM
     ϵ = size(slm.A, 1) / size(layout.mask, 1)
     t = ift(layout, v_forced_trap, ϵ, Val(algorithm.ft_method))
@@ -83,7 +86,7 @@ end
 
 
 """
-    The fixed phase WGS algorithm.
+    The fixed phase WGS algorithm with interpolation.
 
     Args:
             
@@ -106,13 +109,15 @@ function match_image(layout::Layout, layout_new::Layout, slm::SLM, α::Real, alg
 end
 
 function match_image(layout::Layout, layout_new::Layout, slm::SLM, α::Real, target_A_reweight, algorithm::WGS)
-    # initial image space information
-    field = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
-    image = fft(field)
+    # layout information
+    ϵ = size(slm.A, 1) / size(layout.mask, 1)
     layout_union, layout_disappear, layout_appear = deal_layout(layout, layout_new)
     disapperindex = extract_locations(layout_union, layout_disappear.mask)
     apperindex = extract_locations(layout_union, layout_appear.mask)
-    trap = extract_locations(layout_union, image)
+
+    # initial image space information
+    field = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
+    trap = ft(layout_union, field, ϵ, Val(algorithm.ft_method))
     trap_A = normalize!(abs.(trap))
     trap_ϕ = angle.(trap)
     ϕ = similar(slm.ϕ)
@@ -121,6 +126,7 @@ function match_image(layout::Layout, layout_new::Layout, slm::SLM, α::Real, tar
     # ------ Iterative Optimization Start --------
     print("Start $algorithm")
     t0 = time()
+    iters = 0
     for i in 1:algorithm.maxiter
         reweight = clamp!(mean(trap_A) ./ trap_A, 0.1, 10)
         reweight[disapperindex] .*=  1 - α
@@ -132,6 +138,7 @@ function match_image(layout::Layout, layout_new::Layout, slm::SLM, α::Real, tar
             trap_ϕ = trap_ϕ_new
         end
 
+        iters += 1
         if algorithm.verbose && (i % algorithm.show_every == 0)
             stdmean = compute_cost(trap_A, apperindex, disapperindex, α)
             print(@sprintf("step = %5d\tcost = %.3e\n", i, stdmean))
@@ -143,7 +150,7 @@ function match_image(layout::Layout, layout_new::Layout, slm::SLM, α::Real, tar
 
     t1 = time()
     stdmean = compute_cost(trap_A, apperindex, disapperindex, α)
-    print(@sprintf("Finish WGS\n  time = %.2f ms\tcost = %.3e\n", (t1-t0)/algorithm.maxiter*1000, stdmean))
+    print(@sprintf("Finish WGS\n  total_time = %.2f s\tsingle_time = %.2f ms\tcost = %.3e\n", (t1-t0), (t1-t0)/iters*1000, stdmean))
 
     return SLM(slm.A, ϕ, slm.SLM2π), stdmean, target_A_reweight
 end

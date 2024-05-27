@@ -33,12 +33,11 @@ Warning:
 function compute_cost(A::AbstractArray, appearindex, disappearindex, α)
     t = abs2.(A)
     mean = Statistics.mean(t)
+    std_mean2 = (std(t[appearindex]) + std(t[disappearindex])) / mean
+
     t[disappearindex] ./= (1 - α)^2
     t[appearindex] ./= α^2
     std_mean1 = std(t) / mean
-
-    t = t[.!(appearindex .| disappearindex)] # remove appearing and disappearing traps, only consider the intersected traps
-    std_mean2 = std(t) / mean
 
     return isnan(std_mean1) ? std_mean2 : min(std_mean1, std_mean2)
 end
@@ -56,5 +55,5 @@ function plot(slms)
         image = fft(fourier)
         Plots.heatmap!(p[i], abs.(image), colorbar=false, aspect_ratio=:equal, ticks=false, yticks=false)
     end
-    heatmap!(p, size=(100*length(slms), 100))
+    heatmap!(p, size=(200*length(slms), 200))
 end
