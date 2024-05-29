@@ -28,14 +28,23 @@ end
         https://www.osapublishing.org/ol/abstract.cfm?uri=ol-44-12-3178
 """
 function match_image(layout::Layout, slm::SLM, algorithm::WGS)
+    target_A_reweight = ones(layout.ntrap) / sqrt(layout.ntrap)
+    match_image(layout, slm, target_A_reweight, algorithm)
+end
+
+function match_image(layout::Layout, slm::SLM, target_A_reweight, algorithm::WGS)
     # initial image space information
-    ϵ = size(slm.A, 1) / size(layout.mask, 1)
-    ϵ != 1 && println("The layout size is lager the slm size, and padding factor ϵ = $ϵ")
+    if isa(layout, GridLayout)
+        ϵ = size(slm.A, 1) / size(layout.mask, 1)
+        ϵ != 1 && println("The layout size is lager the slm size, and padding factor ϵ = $ϵ")
+    else
+        ϵ = 1
+    end
     field = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
     trap = ft(layout, field, ϵ, Val(algorithm.ft_method))
     trap_A = normalize!(abs.(trap))
     trap_ϕ = angle.(trap)
-    target_A_reweight = ones(layout.ntrap) / sqrt(layout.ntrap)
+    
     ϕ = similar(slm.ϕ)
 
     # ------ Iterative Optimization Start --------
@@ -72,8 +81,13 @@ function one_step!(layout::Layout, slm::SLM, target_A_reweight, trap_ϕ, algorit
     v_forced_trap = normalize!(target_A_reweight) .* exp.(1im * trap_ϕ) 
 
     # compute phase front at SLM
-    ϵ = size(slm.A, 1) / size(layout.mask, 1)
-    t = ift(layout, v_forced_trap, ϵ, Val(algorithm.ft_method))
+    if isa(layout, GridLayout)
+        ϵ = size(slm.A, 1) / size(layout.mask, 1)
+        t = ift(layout, v_forced_trap, ϵ, Val(algorithm.ft_method))
+    else
+        ϵ = 1.0
+        t = ift(layout, v_forced_trap, size(slm.A, 1), size(slm.A, 2), Val(algorithm.ft_method))
+    end
     ϕ = (angle.(t) ) .* (0.5 / π) * slm.SLM2π
     field = slm.A .* exp.(2im * π * ϕ  / slm.SLM2π)
 

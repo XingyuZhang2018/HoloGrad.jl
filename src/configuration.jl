@@ -65,3 +65,14 @@ function embed_locations(layout::GridLayout, v::Array)
     return copy(A)
 end
 
+struct ContinuousLayout <: Layout
+    points::Vector
+    ntrap::Int
+    function ContinuousLayout(points::Vector)
+        for p in points
+            @assert (0 <= p[1] <= 1 && 0 <= p[2] <= 1) "All points must be normalized in the range [0, 1]"
+        end
+        new(points, length(points))
+    end
+end
+

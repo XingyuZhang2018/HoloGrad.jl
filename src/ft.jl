@@ -1,13 +1,15 @@
 """
 fourier transform functions for SLM optimization.
 
-three methods are provided: fft, mft, smft.
+four methods are provided: fft, mft, smft, cft.
 
     * fft: fast fourier transform.
 
     * mft: dense matrix fourier transform.
 
     * smft: sparse matrix fourier transform.
+
+    * cft: continuous fourier transform.
 
 """
 function ft(layout, signal, ϵ, ::Val{:fft})
@@ -25,6 +27,10 @@ end
 
 function ft(layout, signal, ϵ, ::Val{:smft})
     smft(layout, signal)
+end
+
+function ft(layout, signal, ϵ, ::Val{:cft})
+    cft(layout, signal)
 end
 
 function ift(layout, frequency, ϵ, ::Val{:fft})
@@ -45,6 +51,10 @@ function ift(layout, frequency, ϵ, ::Val{:smft})
     Nx = round(Int, Nu * ϵ)
     Ny = round(Int, Nv * ϵ)
     ismft(layout, frequency, Nx, Ny)
+end
+
+function ift(layout, frequency, Nx, Ny, ::Val{:cft})
+    icft(layout, frequency, Nx, Ny)
 end
 
 """
@@ -139,4 +149,30 @@ function ismft(layout, F::AbstractArray{T, 1}, Nx, Ny) where T
     X = exp.(2im * π * x * u' / Nu)
     Y = exp.(2im * π * v * y' / Nv) 
     return ein"(ab,b),bc->ac"(X, F, Y) / (Nu * Nv)
+end
+
+"""
+    continuous fourier transform.
+"""
+function cft(layout, signal)
+    Nx, Ny = size(signal)
+    points = layout.points
+    u = [p[1] for p in points]
+    v = [p[2] for p in points]
+    x = 0:Nx-1
+    y = 0:Ny-1
+    X = exp.(-2im * π * u * x')
+    Y = exp.(-2im * π * y * v')
+    return ein"(ab,bc),ca->a"(X, signal, Y)
+end
+
+function icft(layout, F::AbstractArray{T, 1}, Nx, Ny) where T
+    points = layout.points
+    u = [p[1] for p in points]
+    v = [p[2] for p in points]
+    x = 0:Nx-1
+    y = 0:Ny-1
+    X = exp.(2im * π * x * u')
+    Y = exp.(2im * π * v * y') 
+    return ein"(ab,b),bc->ac"(X, F, Y)
 end

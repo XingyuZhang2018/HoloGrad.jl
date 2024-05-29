@@ -32,32 +32,25 @@ end
     algorithm = WGS(ft_method = :fft)
     slm, cost = match_image(layout, slm, algorithm)
     @test cost < 1e-6
+end
 
-    # with padding
+@testset "wgs padding with $ft_method" for ft_method in [:fft, :mft, :smft]
     mask = zeros(Bool, 20, 20)
     mask[2:2:8, 2:2:8] .= true
     layout = GridLayout(mask)
     slm = SLM(10)
-    algorithm = WGS(ft_method = :fft)
+    algorithm = WGS(ft_method = ft_method)
     slm_padding, cost = match_image(layout, slm, algorithm)
     @test cost < 1e-6
+end
 
-    # with cft
-    mask = zeros(Bool, 20, 20)
-    mask[2:2:8, 2:2:8] .= true
-    layout = GridLayout(mask)
+@testset "wgs cft " begin
+    # with padding
+    points = [rand(2) for _ in 1:10]
+    layout = ContinuousLayout(points)
     slm = SLM(10)
-    algorithm = WGS(ft_method = :mft)
-    slm_cft, cost = match_image(layout, slm, algorithm)
-    @test cost < 1e-6
-
-    # # with matrixft
-    mask = zeros(Bool, 20, 20)
-    mask[2:2:8, 2:2:8] .= true
-    layout = GridLayout(mask)
-    slm = SLM(10)
-    algorithm = WGS(ft_method = :smft)
-    slm_matrixft, cost = match_image(layout, slm, algorithm)
+    algorithm = WGS(ft_method = :cft)
+    slm_padding, cost = match_image(layout, slm, algorithm)
     @test cost < 1e-6
 end
 
