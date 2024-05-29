@@ -45,7 +45,7 @@ end
 end
 
 @testset "wgs cft " begin
-    # with padding
+    Random.seed!(42)
     points = [rand(2) for _ in 1:10]
     layout = ContinuousLayout(points)
     slm = SLM(10)
