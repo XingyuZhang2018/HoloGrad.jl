@@ -124,10 +124,16 @@ end
 
 function match_image(layout::Layout, layout_new::Layout, slm::SLM, α::Real, target_A_reweight, algorithm::WGS)
     # layout information
-    ϵ = size(slm.A, 1) / size(layout.mask, 1)
     layout_union, layout_disappear, layout_appear = deal_layout(layout, layout_new)
-    disapperindex = extract_locations(layout_union, layout_disappear.mask)
-    apperindex = extract_locations(layout_union, layout_appear.mask)
+    if isa(layout, GridLayout)
+        ϵ = size(slm.A, 1) / size(layout.mask, 1)
+        disapperindex = extract_locations(layout_union, layout_disappear.mask)
+        apperindex = extract_locations(layout_union, layout_appear.mask)
+    else
+        ϵ = 1
+        disapperindex = indexin(layout_disappear.points, layout_union.points)
+        apperindex = indexin(layout_appear.points, layout_union.points)
+    end
 
     # initial image space information
     field = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))

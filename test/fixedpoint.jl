@@ -1,5 +1,7 @@
 using qgh
 using qgh: fixed_point_map, get_dϕdt, embed_locations, evolution_slm
+using ForwardDiff
+using KrylovKit
 using LinearAlgebra
 using Random
 using Test
@@ -66,14 +68,23 @@ end
     @test Zygote.gradient(foo2, slm.ϕ)[1] ≈ num_grad(foo2, slm.ϕ) atol = 1e-7
 
     layout, slm, target_A_reweight = test_config_continuous()
-    foo3(target_A_reweight) = norm(fixed_point_map(layout, slm, target_A_reweight, WGS(ft_method=:cft)))
-    @test Zygote.gradient(foo3, target_A_reweight)[1] ≈ num_grad(foo3, target_A_reweight) atol = 1e-7
+    algorithm = WGS(ft_method=:cft)
+    ∂f∂A = jacobian(x -> fixed_point_map(layout, slm, x, algorithm), target_A_reweight)[1]
 
-    function foo4(ϕ) 
-        s = SLM(slm.A, ϕ, slm.SLM2π)
-        norm(fixed_point_map(layout, s, target_A_reweight, WGS(ft_method=:cft)))
+    dAdt = 1e-5 * randn(size(target_A_reweight)...)
+    dfdt = ForwardDiff.derivative(dt -> fixed_point_map(layout, slm, target_A_reweight + dAdt*dt, algorithm), 0.0)
+    @test ∂f∂A * dAdt ≈ reshape(dfdt, prod(size(dfdt)))
+
+    ∂f∂ϕ = jacobian(x -> fixed_point_map(layout, SLM(slm.A, x, slm.SLM2π), target_A_reweight, algorithm), slm.ϕ)[1]
+
+    dϕdt = rand(size(slm.ϕ)...)
+    function linemap(dϕdt)
+        dϕdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π), target_A_reweight, algorithm), 0.0)
     end
-    @test Zygote.gradient(foo4, slm.ϕ)[1] ≈ num_grad(foo4, slm.ϕ) atol = 1e-7
+    dϕdt1,  = linsolve(x -> linemap(x), dfdt)
+    dϕdt2,  = linsolve(dϕdt -> dϕdt - ∂f∂ϕ * dϕdt, ∂f∂A * dAdt)
+
+    @test dϕdt2 ≈ reshape(dϕdt1, prod(size(slm.ϕ)))
 end
 
 @testset "dϕ/dt " begin
@@ -81,12 +92,12 @@ end
     layout, slm, target_A_reweight = test_config_grid()
     dAdt = 1e-5 * randn(size(target_A_reweight)...)
     dϕdt = get_dϕdt(layout, slm, target_A_reweight, dAdt, WGS())
-    @test size(dϕdt) == (prod(size(slm.ϕ)),)
+    @test size(dϕdt) == size(slm.ϕ)
 
     layout, slm, target_A_reweight = test_config_continuous()
-    v = 1e-5 * [randn(size(target_A_reweight)...),randn(size(target_A_reweight)...)]
-    dϕdt = get_dϕdt(layout, slm, target_A_reweight, v, WGS(ft_method=:cft))
-    @test size(dϕdt) == (prod(size(slm.ϕ)),)
+    dAdt = 1e-5 * randn(size(target_A_reweight)...)
+    dϕdt = get_dϕdt(layout, slm, target_A_reweight, dAdt, WGS(ft_method=:cft))
+    @test size(dϕdt) == size(slm.ϕ)
 end
 
 @testset "evolution_slm discrete" begin
@@ -109,13 +120,16 @@ end
 end
 
 @testset "evolution_slm continuous" begin
+# let
     Random.seed!(42)
-    points = [rand(2) for _ in 1:10]
+    points = [rand(2) for _ in 1:5]
     layout = ContinuousLayout(points)
+    points = points .+ 0.1 * [[1, 0]]
+    layout_new = ContinuousLayout(points)
     slm = SLM(10)
 
-    v = 0.1 * [zeros(10), ones(10)]
-    layouts, slms = evolution_slm(layout, slm, v, WGS(verbose=false, ft_method=:cft); iters=5, dt=0.5)
+    # v =  0.1 * [zeros(1), ones(1)]
+    layouts, slms = evolution_slm(layout, layout_new, slm, WGS(verbose=false, ft_method=:cft); iters=5)
     for i in 1:length(slms)-1
         d = ϕdiff(slms[i+1], slms[i])
         println(maximum(abs.(d)))

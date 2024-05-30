@@ -77,7 +77,7 @@ end
     @test extract_locations(layout_union, layout_disappear.mask) == [1,1,0,0,0]
 end
 
-@testset "wgs evolution" begin
+@testset "wgs evolution grid" begin
     Random.seed!(100)
     mask = zeros(Bool, 10, 10)
     mask[2:2:8, 2:2:8] .= true
@@ -97,4 +97,19 @@ end
     @test slm_new.ϕ ≈ slm.ϕ
 
     slm_new, = match_image(layout, layout_new, slm_new, 1.0, target_A_reweight, algorithm)
+end
+
+@testset "wgs evolution continuous" begin
+    Random.seed!(100)
+    points = [rand(2) for _ in 1:5]
+    layout = ContinuousLayout(points)
+    slm = SLM(10)
+    algorithm = WGS(ft_method = :cft)
+    slm, cost, target_A_reweight = match_image(layout, slm, algorithm)
+    @test cost < 1e-6
+
+    points_new = points .+ [[0.1, 0.0]]
+    layout_new = ContinuousLayout(points_new)
+    slm, cost, target_A_reweight = match_image(layout, layout_new, slm, 0.0, algorithm)
+    @test cost < 1e-6
 end

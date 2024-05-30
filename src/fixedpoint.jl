@@ -23,18 +23,12 @@ end
 Get the time derivative of the phase in the SLM plan by the implicit function theorem.
 
 """
-function get_dϕdt(layout::GridLayout, slm::SLM, target_A_reweight, dAdt, algorithm)
-    ∂f∂A = jacobian(x -> fixed_point_map(layout, slm, x, algorithm), target_A_reweight)[1]
-    ∂f∂ϕ = jacobian(x -> fixed_point_map(layout, SLM(slm.A, x, slm.SLM2π), target_A_reweight, algorithm), slm.ϕ)[1]
+function get_dϕdt(layout::Layout, slm::SLM, target_A_reweight, dAdt, algorithm)
+    dfdt = ForwardDiff.derivative(dt -> fixed_point_map(layout, slm, target_A_reweight + dAdt*dt, algorithm), 0.0)
+    dϕdt, info = linsolve(dϕdt -> ((I(size(dϕdt,1)) .* (1 + 1e-10)) * dϕdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π), target_A_reweight, algorithm), 0.0)), dfdt)
+    # info.converged == 0 && error("dϕdt not converged")
 
-    return (I(size(∂f∂ϕ, 1)) - ∂f∂ϕ) \ (∂f∂A * dAdt)
-end
-
-function get_dϕdt(layout::ContinuousLayout, slm::SLM, target_A_reweight, v, algorithm)
-    ∂f∂A = jacobian(x -> fixed_point_map(layout, slm, x, algorithm), target_A_reweight)[1]
-    ∂f∂ϕ = jacobian(x -> fixed_point_map(layout, SLM(slm.A, x, slm.SLM2π), target_A_reweight, algorithm), slm.ϕ)[1]
-
-    return (I(size(∂f∂ϕ, 1)) - ∂f∂ϕ) \ (∂f∂A * (target_A_reweight .* (v[1] + v[2])))
+    return dϕdt
 end
 
 function evolution_slm(layout::GridLayout, layout_new::Layout, slm::SLM, algorithm; iters=5, δ=1e-1, dt=1e-1)
@@ -48,7 +42,7 @@ function evolution_slm(layout::GridLayout, layout_new::Layout, slm::SLM, algorit
     for i in 1:iters
         @show i
         # slm, cost, target_A_reweight_new = match_image(layout, layout_new, slm, i/iters, abs.(target_A_reweight), algorithm)
-        dϕdt = reshape(get_dϕdt(layout_union, slm, target_A_reweight, dAdt, algorithm), size(slm.ϕ))
+        dϕdt = get_dϕdt(layout_union, slm, target_A_reweight, dAdt, algorithm)
         ϕ += dϕdt * dt
         slm = SLM(slm.A, ϕ, slm.SLM2π)
         push!(slms, slm)
@@ -59,25 +53,33 @@ function evolution_slm(layout::GridLayout, layout_new::Layout, slm::SLM, algorit
     return slms
 end
 
-function evolution_slm(layout::ContinuousLayout, slm::SLM, v, algorithm; iters=5, dt=1e-1)
-    slm, cost, target_A_reweight = match_image(layout, slm, algorithm)
-    ϕ = slm.ϕ
+function evolution_slm(layout::ContinuousLayout, layout_end::ContinuousLayout, slm::SLM, algorithm; iters=5)
+    dt=1/iters
+    points = layout.points
+    diff = (layout_end.points - layout.points) / iters
+    layout_new = ContinuousLayout(layout.points + diff)
+    slm, cost, target_A_reweight = match_image(layout, layout_new, slm, 0.0, algorithm)
 
     slms = [slm]
     layouts = [layout]
     for i in 1:iters
-        dϕdt = reshape(get_dϕdt(layout, slm, target_A_reweight, v, algorithm), size(slm.ϕ))
-        ϕ += dϕdt * dt
-        points = copy(layout.points)
-        for i in 1:length(points)
-            points[i] += [v[1][i], v[2][i]] .* dt
-        end
-        layout = ContinuousLayout(points)
-        slm = SLM(slm.A, ϕ, slm.SLM2π)
-        slm, cost, target_A_reweight = match_image(layout, slm, target_A_reweight, algorithm)
+        layout = ContinuousLayout(points + (i-1)*diff)
+        layout_new = ContinuousLayout(points + i*diff)
+        layout_union, layout_disappear, layout_appear = deal_layout(layout, layout_new)
+        disapperindex = indexin(layout_disappear.points, layout_union.points)
+        apperindex = indexin(layout_appear.points, layout_union.points)
+
+        slm, cost, target_A_reweight = match_image(layout, layout_new, slm, 0.0, target_A_reweight, algorithm)
+
+        dAdt = zeros(size(target_A_reweight))
+        dAdt[apperindex] .= 1
+        dAdt[disapperindex] .= -target_A_reweight[disapperindex]
+
+        dϕdt = get_dϕdt(layout_union, slm, target_A_reweight, dAdt, algorithm)
+        # @show dϕdt
+        slm = SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π)
         push!(slms, slm)
-        push!(layouts, layout)
-        # @show target_A_reweight
+        push!(layouts, layout_new)
     end
     
     return layouts, slms

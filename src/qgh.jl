@@ -2,6 +2,8 @@ module qgh
 
     using CUDA
     using FFTW
+    using ForwardDiff
+    using KrylovKit
     using LinearAlgebra
     using Statistics
     using Parameters

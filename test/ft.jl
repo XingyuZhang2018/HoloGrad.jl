@@ -48,7 +48,7 @@ end
     @test size(F,1) == layout.ntrap
     f_new = icft(layout, F, 10, 10)
     # @test normalize(f) ≈ normalize(f_new)
-    @show normalize(f) - normalize(f_new)
+    # @show normalize(f) - normalize(f_new)
 end
 
 @testset "ft api with $ft_method" for ft_method in [:fft, :mft, :smft] 

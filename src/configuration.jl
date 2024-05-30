@@ -1,6 +1,6 @@
 struct SLM
-    A::AbstractArray{Float64,2}
-    ϕ::AbstractArray{Float64,2}
+    A::AbstractArray
+    ϕ::AbstractArray
     SLM2π::Float64
 end
 
@@ -43,11 +43,6 @@ function union(A::GridLayout, B::GridLayout)
     return GridLayout(mask)
 end
 
-function intersect(A::GridLayout, B::GridLayout)
-    mask = Array{Bool}(A.mask .& B.mask)
-    return GridLayout(mask)
-end
-
 function setdiff(A::GridLayout, B::GridLayout)
     mask = Array{Bool}(A.mask .& .~(B.mask))
     return GridLayout(mask)
@@ -76,3 +71,12 @@ struct ContinuousLayout <: Layout
     end
 end
 
+function union(A::ContinuousLayout, B::ContinuousLayout)
+    points = union(A.points, B.points)
+    return ContinuousLayout(points)
+end
+
+function setdiff(A::ContinuousLayout, B::ContinuousLayout)
+    points = setdiff(A.points, B.points)
+    return ContinuousLayout(points)
+end
