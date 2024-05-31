@@ -14,72 +14,42 @@ function fixed_point_map(layout::Layout, slm::SLM, target_A_reweight, algorithm)
         t = ift(layout, v_forced_trap, size(slm.A)..., Val(algorithm.ft_method))
     end
     ϕ = (angle.(t) ) .* (0.5 / π) * slm.SLM2π
-    return ϕ
+    return mod.(ϕ .- slm.SLM2π, slm.SLM2π) .+ slm.SLM2π
 end
 
 """
-    get_dϕdt(slm::SLM, target_A_reweight, dAdt)
-
 Get the time derivative of the phase in the SLM plan by the implicit function theorem.
-
 """
-function get_dϕdt(layout::Layout, slm::SLM, target_A_reweight, dAdt, algorithm)
-    dfdt = ForwardDiff.derivative(dt -> fixed_point_map(layout, slm, target_A_reweight + dAdt*dt, algorithm), 0.0)
-    dϕdt, info = linsolve(dϕdt -> ((I(size(dϕdt,1)) .* (1 + 1e-10)) * dϕdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π), target_A_reweight, algorithm), 0.0)), dfdt)
+function get_dϕdt(layout::Layout, slm::SLM, B, dBdt, dxdt, algorithm)
+    b = ForwardDiff.derivative(dt -> fixed_point_map(layout, slm, B + dBdt*dt, algorithm), 0.0) + ForwardDiff.derivative(dt -> fixed_point_map(ContinuousLayout(layout.points + dxdt*dt), slm, B, algorithm), 0.0)
+    dϕdt, info = linsolve(dϕdt -> ((I(size(dϕdt,1)) .* (1 + 1e-10)) * dϕdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π), B, algorithm), 0.0)), b)
     # info.converged == 0 && error("dϕdt not converged")
-
     return dϕdt
 end
 
-function evolution_slm(layout::GridLayout, layout_new::Layout, slm::SLM, algorithm; iters=5, δ=1e-1, dt=1e-1)
-    slm, cost, target_A_reweight = match_image(layout, layout_new, slm, 0.0, algorithm)
-
-    layout_union, = deal_layout(layout, layout_new)
-    dAdt = reshape(extract_locations(layout_union, (layout_new.mask - layout.mask)), prod(size(target_A_reweight)), )
-    ϕ = slm.ϕ
-
-    slms = [slm]
-    for i in 1:iters
-        @show i
-        # slm, cost, target_A_reweight_new = match_image(layout, layout_new, slm, i/iters, abs.(target_A_reweight), algorithm)
-        dϕdt = get_dϕdt(layout_union, slm, target_A_reweight, dAdt, algorithm)
-        ϕ += dϕdt * dt
-        slm = SLM(slm.A, ϕ, slm.SLM2π)
-        push!(slms, slm)
-        slm, cost, target_A_reweight = match_image(layout, layout_new, slm, i/iters, abs.(target_A_reweight + dAdt * dt), algorithm)
-        @show target_A_reweight
-    end
-    
-    return slms
-end
-
-function evolution_slm(layout::ContinuousLayout, layout_end::ContinuousLayout, slm::SLM, algorithm; iters=5)
+function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, algorithm; iters=5)
     dt=1/iters
+    slm, cost, target_A_reweight = match_image(layout, slm, algorithm)
     points = layout.points
     diff = (layout_end.points - layout.points) / iters
-    layout_new = ContinuousLayout(layout.points + diff)
-    slm, cost, target_A_reweight = match_image(layout, layout_new, slm, 0.0, algorithm)
+
 
     slms = [slm]
     layouts = [layout]
     for i in 1:iters
+        println("Step $i/$iters")
         layout = ContinuousLayout(points + (i-1)*diff)
-        layout_new = ContinuousLayout(points + i*diff)
-        layout_union, layout_disappear, layout_appear = deal_layout(layout, layout_new)
-        disapperindex = indexin(layout_disappear.points, layout_union.points)
-        apperindex = indexin(layout_appear.points, layout_union.points)
+        slm, cost, target_A_reweight = match_image(layout, slm, target_A_reweight, algorithm)
+        # layout_new = ContinuousLayout(points + i*diff)
+        # slm_new, _, target_A_reweight_new = match_image(layout_new, slm, copy(target_A_reweight), algorithm)
 
-        slm, cost, target_A_reweight = match_image(layout, layout_new, slm, 0.0, target_A_reweight, algorithm)
-
-        dAdt = zeros(size(target_A_reweight))
-        dAdt[apperindex] .= 1
-        dAdt[disapperindex] .= -target_A_reweight[disapperindex]
-
-        dϕdt = get_dϕdt(layout_union, slm, target_A_reweight, dAdt, algorithm)
-        # @show dϕdt
+        dBdt = -target_A_reweight
+        dxdt = diff
+        dϕdt = get_dϕdt(layout, slm, target_A_reweight, dBdt, dxdt, algorithm)
+        # @show dϕdt slm_new.ϕ-slm.ϕ
         slm = SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π)
         push!(slms, slm)
-        push!(layouts, layout_new)
+        push!(layouts, layout)
     end
     
     return layouts, slms

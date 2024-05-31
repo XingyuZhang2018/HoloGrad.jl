@@ -57,16 +57,6 @@ end
 
 @testset "∂f/∂A and ∂f/∂ϕ " begin
     Random.seed!(42)
-    layout, slm, target_A_reweight = test_config_grid()
-    foo1(target_A_reweight) = norm(fixed_point_map(layout, slm, target_A_reweight, WGS()))
-    @test Zygote.gradient(foo1, target_A_reweight)[1] ≈ num_grad(foo1, target_A_reweight) atol = 1e-7
-
-    function foo2(ϕ) 
-        s = SLM(slm.A, ϕ, slm.SLM2π)
-        norm(fixed_point_map(layout, s, target_A_reweight, WGS()))
-    end
-    @test Zygote.gradient(foo2, slm.ϕ)[1] ≈ num_grad(foo2, slm.ϕ) atol = 1e-7
-
     layout, slm, target_A_reweight = test_config_continuous()
     algorithm = WGS(ft_method=:cft)
     ∂f∂A = jacobian(x -> fixed_point_map(layout, slm, x, algorithm), target_A_reweight)[1]
@@ -89,43 +79,19 @@ end
 
 @testset "dϕ/dt " begin
     Random.seed!(42)
-    layout, slm, target_A_reweight = test_config_grid()
-    dAdt = 1e-5 * randn(size(target_A_reweight)...)
-    dϕdt = get_dϕdt(layout, slm, target_A_reweight, dAdt, WGS())
-    @test size(dϕdt) == size(slm.ϕ)
-
     layout, slm, target_A_reweight = test_config_continuous()
     dAdt = 1e-5 * randn(size(target_A_reweight)...)
-    dϕdt = get_dϕdt(layout, slm, target_A_reweight, dAdt, WGS(ft_method=:cft))
+    dxdt = 1e-5 * layout.points
+    dϕdt = get_dϕdt(layout, slm, target_A_reweight, dAdt, dxdt, WGS(ft_method=:cft))
     @test size(dϕdt) == size(slm.ϕ)
-end
-
-@testset "evolution_slm discrete" begin
-    Random.seed!(42)
-    mask = zeros(Bool, 100, 100)
-    mask[2,1] = true
-    layout = GridLayout(mask)
-    mask = zeros(Bool, 100, 100)
-    mask[2,10] = true
-    layout_new = GridLayout(mask)
-    slm = SLM(10)
-
-    slms = evolution_slm(layout, layout_new, slm, WGS(verbose=false); iters=5, δ=1, dt=1)
-    for i in 1:length(slms)-1
-        d = ϕdiff(slms[i+1], slms[i])
-        println(maximum(abs.(d)))
-    end
-    @test length(slms) == 6
-    plot(padding.(slms,0.1))
 end
 
 @testset "evolution_slm continuous" begin
-# let
     Random.seed!(42)
     points = [rand(2) for _ in 1:5]
     layout = ContinuousLayout(points)
-    points = points .+ 0.1 * [[1, 0]]
-    layout_new = ContinuousLayout(points)
+    points_new = points .+ 0.1 * [[0, 1]]
+    layout_new = ContinuousLayout(points_new)
     slm = SLM(10)
 
     # v =  0.1 * [zeros(1), ones(1)]
@@ -136,5 +102,5 @@ end
     end
     @test length(slms) == 6
     # plot(layouts, slms)
-    plot(slms)
+    # plot(slms)
 end

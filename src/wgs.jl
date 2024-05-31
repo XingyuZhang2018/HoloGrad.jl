@@ -48,7 +48,7 @@ function match_image(layout::Layout, slm::SLM, target_A_reweight, algorithm::WGS
     ϕ = similar(slm.ϕ)
 
     # ------ Iterative Optimization Start --------
-    print("Start $algorithm")
+    algorithm.verbose && print("Start $algorithm")
     t0 = time()
     iters = 0
     for i in 1:algorithm.maxiter
@@ -60,9 +60,9 @@ function match_image(layout::Layout, slm::SLM, target_A_reweight, algorithm::WGS
         end
 
         iters += 1
-        if algorithm.verbose && (i % algorithm.show_every == 0)
+        if i % algorithm.show_every == 0
             stdmean = compute_cost(trap_A)
-            print(@sprintf("step = %5d\tcost = %.3e\n", i, stdmean))
+            algorithm.verbose && print(@sprintf("step = %5d\tcost = %.3e\n", i, stdmean))
             if stdmean < algorithm.tol
                 break
             end
@@ -144,7 +144,7 @@ function match_image(layout::Layout, layout_new::Layout, slm::SLM, α::Real, tar
     target_A_reweight[apperindex] .= mean(target_A_reweight) * α
 
     # ------ Iterative Optimization Start --------
-    print("Start $algorithm")
+    algorithm.verbose && print("Start $algorithm")
     t0 = time()
     iters = 0
     for i in 1:algorithm.maxiter
@@ -159,9 +159,9 @@ function match_image(layout::Layout, layout_new::Layout, slm::SLM, α::Real, tar
         end
 
         iters += 1
-        if algorithm.verbose && (i % algorithm.show_every == 0)
+        if i % algorithm.show_every == 0
             stdmean = compute_cost(trap_A, apperindex, disapperindex, α)
-            print(@sprintf("step = %5d\tcost = %.3e\n", i, stdmean))
+            algorithm.verbose && print(@sprintf("step = %5d\tcost = %.3e\n", i, stdmean))
             if stdmean < algorithm.tol
                 break
             end

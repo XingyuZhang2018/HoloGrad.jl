@@ -2,6 +2,10 @@ struct SLM
     A::AbstractArray
     ϕ::AbstractArray
     SLM2π::Float64
+    function SLM(A, ϕ, SLM2π)
+        ϕ = mod.(ϕ .- SLM2π, SLM2π) .+ SLM2π # fix ϕ to [0, SLM2π]
+        new(A, ϕ, SLM2π)
+    end
 end
 
 SLM(A::AbstractArray{Float64,2}) = SLM(normalize(A), 2 * pi * rand(size(A)...), 208.0) 

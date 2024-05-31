@@ -13,7 +13,7 @@ let
     slm = SLM(1024)
 
     # run the WGS algorithm
-    algorithm = WGS(maxiter = 1000, ratio_fixphase = 0.5)
+    algorithm = WGS(maxiter = 1000, ratio_fixphase = 0.5, ft_method = :fft)
     slm, cost = match_image(layout, slm, algorithm)
 
     # plot the result

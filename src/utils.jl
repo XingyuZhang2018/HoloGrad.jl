@@ -66,7 +66,7 @@ function plot(slms)
         image = normalize(fft(fourier))
         Plots.heatmap!(p[i], abs.(image), colorbar=false, aspect_ratio=:equal, ticks=false, yticks=false)
     end
-    heatmap!(p, size=(100*length(slms), 100))
+    heatmap!(p, size=(200*length(slms), 200))
 end
 
 function plot(layouts, slms)
@@ -81,5 +81,5 @@ function plot(layouts, slms)
         end
         Plots.heatmap!(p[i], abs.(image), colorbar=false, aspect_ratio=:equal, ticks=false, yticks=false)
     end
-    heatmap!(p, size=(100*length(slms), 100))
+    heatmap!(p, size=(200*length(slms), 200))
 end
