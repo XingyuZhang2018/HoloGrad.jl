@@ -23,7 +23,7 @@ Get the time derivative of the phase in the SLM plan by the implicit function th
 function get_dϕdt(layout::Layout, slm::SLM, B, dBdt, dxdt, algorithm)
     b = ForwardDiff.derivative(dt -> fixed_point_map(layout, slm, B + dBdt*dt, algorithm), 0.0) + ForwardDiff.derivative(dt -> fixed_point_map(ContinuousLayout(layout.points + dxdt*dt), slm, B, algorithm), 0.0)
     dϕdt, info = linsolve(dϕdt -> ((I(size(dϕdt,1)) .* (1 + 1e-10)) * dϕdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π), B, algorithm), 0.0)), b)
-    # info.converged == 0 && error("dϕdt not converged")
+    info.converged == 0 && @warn "dϕdt not converged."
     return dϕdt
 end
 
@@ -63,7 +63,7 @@ function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, a
         t0 = time()
         dϕdt = get_dϕdt(layout, slm, target_A_reweight, dBdt, dxdt, algorithm)
         t1 = time()
-        print(@sprintf("Finish dϕdt time = %.3f ms\n", t1-t0))
+        print(@sprintf("Finish dϕdt time = %.2f s\n", t1-t0))
 
         slm = SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π)
         push!(slms, slm)
