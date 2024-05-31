@@ -27,12 +27,30 @@ function get_dϕdt(layout::Layout, slm::SLM, B, dBdt, dxdt, algorithm)
     return dϕdt
 end
 
+"""
+evolution slm by matching the image of layout and slm.
+
+Args:
+    layout (Layout): the layout of traps.
+    layout_end (Layout): the layout of traps at the end.
+    slm (SLM): the initial SLM.
+    algorithm (Algorithm): the algorithm to match the image.
+    
+Keyword Args:
+    iters (Int): the number of interpolation between layout and layout_end.
+
+Returns:
+    layouts (Array{Layout}): the layouts of traps.
+    slms (Array{SLM}): the SLMs.
+
+Currently dx/dt and the time step are linearly fixed.
+"""
 function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, algorithm; iters=5)
     dt=1/iters
     slm, cost, target_A_reweight = match_image(layout, slm, algorithm)
     points = layout.points
-    diff = (layout_end.points - layout.points) / iters
-
+    
+    dxdt = (layout_end.points - layout.points) / iters # linear interpolation 
 
     slms = [slm]
     layouts = [layout]
@@ -40,13 +58,10 @@ function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, a
         println("Step $i/$iters")
         layout = ContinuousLayout(points + (i-1)*diff)
         slm, cost, target_A_reweight = match_image(layout, slm, target_A_reweight, algorithm)
-        # layout_new = ContinuousLayout(points + i*diff)
-        # slm_new, _, target_A_reweight_new = match_image(layout_new, slm, copy(target_A_reweight), algorithm)
 
-        dBdt = -target_A_reweight
-        dxdt = diff
+        dBdt = -target_A_reweight # without intermidiate target_A_reweight
         dϕdt = get_dϕdt(layout, slm, target_A_reweight, dBdt, dxdt, algorithm)
-        # @show dϕdt slm_new.ϕ-slm.ϕ
+
         slm = SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π)
         push!(slms, slm)
         push!(layouts, layout)
