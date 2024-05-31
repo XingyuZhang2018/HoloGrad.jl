@@ -46,7 +46,7 @@ Returns:
 Currently dx/dt and the time step are linearly fixed.
 """
 function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, algorithm; iters=5)
-    dt=1/iters
+    dt=1/iters # linear interpolation 
     slm, cost, target_A_reweight = match_image(layout, slm, algorithm)
     points = layout.points
     
@@ -56,11 +56,14 @@ function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, a
     layouts = [layout]
     for i in 1:iters
         println("Step $i/$iters")
-        layout = ContinuousLayout(points + (i-1)*diff)
+        layout = ContinuousLayout(points + (i-1)*dxdt)
         slm, cost, target_A_reweight = match_image(layout, slm, target_A_reweight, algorithm)
 
         dBdt = -target_A_reweight # without intermidiate target_A_reweight
+        t0 = time()
         dϕdt = get_dϕdt(layout, slm, target_A_reweight, dBdt, dxdt, algorithm)
+        t1 = time()
+        print(@sprintf("Finish dϕdt time = %.3f ms\n", t1-t0))
 
         slm = SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π)
         push!(slms, slm)
