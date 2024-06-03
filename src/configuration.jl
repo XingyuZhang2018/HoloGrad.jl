@@ -32,38 +32,6 @@ Specify the target trap locations as a list of points. The `x` and `y` locations
 Args:
     mask (Tensor): the grid mask, only positions marked True have traps,
 """
-struct GridLayout <: Layout
-    mask::Array{Bool}
-    ntrap::Int
-    function GridLayout(mask::Array{Bool})
-        # sanity check
-        @assert eltype(mask) == Bool "mask must be of type Array{Bool}"
-        new(mask, sum(mask))
-    end
-end
-
-function union(A::GridLayout, B::GridLayout)
-    mask = Array{Bool}(A.mask .| B.mask)
-    return GridLayout(mask)
-end
-
-function setdiff(A::GridLayout, B::GridLayout)
-    mask = Array{Bool}(A.mask .& .~(B.mask))
-    return GridLayout(mask)
-end
-
-function extract_locations(layout::GridLayout, m::Array)
-    return m[layout.mask]
-end
-
-function embed_locations(layout::GridLayout, v::Array)
-    # A = zeros(eltype(v), size(layout.mask)...)
-    A = Zygote.Buffer(v, size(layout.mask)...)
-    A[:] = zeros(eltype(v), size(layout.mask)...)
-    A[layout.mask] = v
-    return copy(A)
-end
-
 struct ContinuousLayout <: Layout
     points::Vector
     ntrap::Int

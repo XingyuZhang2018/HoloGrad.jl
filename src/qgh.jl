@@ -15,7 +15,7 @@ module qgh
     import Base: intersect, union, setdiff
     import Plots: plot
     
-    export GridLayout, ContinuousLayout, SLM, ϕdiff
+    export ContinuousLayout, SLM, ϕdiff
     export match_image, WGS
     export plot, padding
     module Defaults
