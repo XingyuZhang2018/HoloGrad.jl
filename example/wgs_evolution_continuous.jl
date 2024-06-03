@@ -8,7 +8,7 @@ let
     include("layout_example.jl")
     layout = layout_example(Val(:butterflycontinuous); α = 0.0)
     layout_new = layout_example(Val(:butterflycontinuous); α = 0.2)
-    slm = SLM(100)
+    slm = SLM(50)
     algorithm = WGS(verbose=false)
     slms = []
 

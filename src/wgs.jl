@@ -34,10 +34,10 @@ end
 function match_image(layout::Layout, slm::SLM, target_A_reweight, algorithm::WGS)
     # preloc 
     A, ϕ, SLM2π = slm.A, slm.ϕ, slm.SLM2π
-    X, Y, iX, iY = preloc_cft(layout, field)
 
     # initial image space information
     field = A .* exp.(ϕ * (2im * π / slm.SLM2π))
+    X, Y, iX, iY = preloc_cft(layout, field)
     trap = cft(field, X, Y)
     trap_A = normalize!(abs.(trap))
     trap_ϕ = angle.(trap)
