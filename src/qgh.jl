@@ -16,7 +16,7 @@ module qgh
     import Plots: plot
     
     export ContinuousLayout, SLM, ϕdiff
-    export match_image, WGS
+    export match_image, WGS, evolution_slm
     export plot, padding
     module Defaults
         const atype = Array 
