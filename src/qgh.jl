@@ -9,6 +9,7 @@ module qgh
     using Parameters
     using Plots
     using Printf
+    using Optim
     using OMEinsum
     using Zygote
     
@@ -17,7 +18,8 @@ module qgh
     
     export ContinuousLayout, SLM, ϕdiff
     export match_image, WGS, evolution_slm
-    export plot, padding
+    export plot, plot_slms_ϕ_diff, plot_gif
+    
     module Defaults
         const atype = Array 
         const maxiter = 1000

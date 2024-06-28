@@ -3,7 +3,7 @@ struct SLM
     ϕ::AbstractArray
     SLM2π::Float64
     function SLM(A, ϕ, SLM2π)
-        ϕ = mod.(ϕ .- SLM2π, SLM2π) .+ SLM2π # fix ϕ to [0, SLM2π]
+        ϕ = mod1.(ϕ, SLM2π) # fix ϕ to [0, SLM2π]
         new(A, ϕ, SLM2π)
     end
 end
@@ -21,7 +21,7 @@ end
 
 function ϕdiff(A::SLM, B::SLM) 
     @assert A.SLM2π == B.SLM2π "SLM2π must be the same"
-    diff = mod.(A.ϕ - B.ϕ .+ A.SLM2π/2, A.SLM2π) .- A.SLM2π/2
+    diff = mod.(A.ϕ - B.ϕ .+ A.SLM2π/2, A.SLM2π) .- A.SLM2π/2 # fix ϕ to [-SLM2π/2, SLM2π/2]
     return diff
 end
 
