@@ -3,7 +3,7 @@ struct SLM
     ϕ::AbstractArray
     SLM2π::Float64
     function SLM(A, ϕ, SLM2π)
-        ϕ = mod1.(ϕ, SLM2π) # fix ϕ to [0, SLM2π]
+        ϕ = mod.(ϕ, SLM2π) # fix ϕ to [0, SLM2π]
         new(A, ϕ, SLM2π)
     end
 end

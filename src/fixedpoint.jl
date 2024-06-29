@@ -9,7 +9,7 @@ function fixed_point_map(layout::Layout, slm::SLM, B)
     v_forced_trap = normalize(B) .* exp.(1im * trap_ϕ)
     t = icft(v_forced_trap, iX, iY)
     ϕ = (angle.(t) ) .* (0.5 / π) * slm.SLM2π
-    return [mod1.(ϕ, slm.SLM2π), B]
+    return [mod.(ϕ, slm.SLM2π), B]
 end
 
 """
@@ -26,6 +26,22 @@ function get_dϕdt(layout::Layout, slm::SLM, B, dxdt)
     b = ForwardDiff.derivative(dt -> fixed_point_map(ContinuousLayout(layout.points + dxdt*dt), slm, B), 0.0)
     dϕdt, info = linsolve(dϕdt -> ((I(size(dϕdt,1)) .* (1 + 1e-10)) * dϕdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π), B), 0.0)), b)
     info.converged == 0 && @warn "dϕdt not converged."
+    return dϕdt
+end
+
+"""
+    Get the time derivative of the phase in the SLM plane by iterations.
+"""
+function get_dϕdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5)
+    function f(dt)
+        layout = ContinuousLayout(layout.points + dxdt*dt)
+        for _ in 1:iters
+            ϕ, B = fixed_point_map(layout, slm, B)
+            slm = SLM(slm.A, ϕ, slm.SLM2π)
+        end
+        return slm.ϕ
+    end
+    dϕdt = ForwardDiff.derivative(dt -> f(dt), 0.0)
     return dϕdt
 end
 
@@ -66,7 +82,11 @@ Returns:
 
 Currently dx/dt and the time step are linearly fixed.
 """
-function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, algorithm; slices=5, interps=5, ifflow=true)
+function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, algorithm; 
+                        slices=5, 
+                        interps=5, 
+                        aditers=10,
+                        ifflow=true)
 
     points = layout.points
     Δx = (layout_end.points - layout.points) / slices # linear interpolation 
@@ -74,39 +94,34 @@ function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, a
     dxdt = Δx
 
     slm, cost, B = match_image(layout, slm, algorithm)
-    dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt)
+    # dϕdt = get_dϕdt(layout, slm, B, dxdt, 5)
 
     slms = [slm]
     layouts = [layout]
     for i in 1:slices
         println("Step $i/$slices")
-        if ifflow
+        if ifflow    
+            layout = ContinuousLayout(points + (i-1)*Δx)
+            slm, cost, B = match_image(layout, slm, B, algorithm)
             t0 = time()
-            slm_old = slm
-            layout = ContinuousLayout(points + i*Δx)
-            slm_new, cost, B = match_image(layout, slm, B, algorithm)
-            dϕdt_new, dBdt = get_dϕBdt(layout, slm_new, B, dxdt)
-            for j in 1:interps
-                if j < interps / 2
-                    ϕ_mix = slm_old.ϕ + dϕdt * j/interps/5
-                else
-                    ϕ_mix = slm_new.ϕ + dϕdt_new * (interps-j)/interps/5
-                end
-                slm = SLM(slm.A, ϕ_mix, slm.SLM2π)
-                push!(slms, slm)
-            end
+            # dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
+            dϕdt = get_dϕdt(layout, slm, B, dxdt, aditers) # by iterations
             t1 = time()
-
-            dϕdt = dϕdt_new
-            slm = slm_new
+            for j in 1:interps
+                slm = SLM(slm.A, slm.ϕ + dϕdt * dt/interps, slm.SLM2π)
+                push!(slms, slm)
+                push!(layouts, layout)
+            end
             layout = ContinuousLayout(points + i*Δx)
             cost = compute_cost(slm, layout)
             print(@sprintf("Finish dϕdt \n  time = %.2f s, cost = %.3e\n", t1-t0, cost))
         else
             layout = ContinuousLayout(points + i*Δx)
             slm, cost, B = match_image(layout, slm, B, algorithm)
+            push!(slms, slm)
+            push!(layouts, layout)
         end
-        push!(layouts, layout)
+        
     end
     
     return layouts, slms
