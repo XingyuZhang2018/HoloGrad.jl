@@ -25,30 +25,25 @@ function ϕdiff(A::SLM, B::SLM)
     return diff
 end
 
+CuArray(slm::SLM) = SLM(CuArray(slm.A), CuArray(slm.ϕ), slm.SLM2π)
+Array(slm::SLM) = SLM(Array(slm.A), Array(slm.ϕ), slm.SLM2π)
+
+
 abstract type Layout end
 """
 Specify the target trap locations as a list of points. The `x` and `y` locations should be normalized in [0, 1].
 
 Args:
-    mask (Tensor): the grid mask, only positions marked True have traps,
+    points (`ntraps × 2` Matrix): the target trap locations, each row is a point.
 """
 struct ContinuousLayout <: Layout
-    points::Vector
+    points::AbstractArray
     ntrap::Int
-    function ContinuousLayout(points::Vector)
-        for p in points
-            @assert (0 <= p[1] <= 1 && 0 <= p[2] <= 1) "All points must be normalized in the range [0, 1]"
-        end
-        new(points, length(points))
+    function ContinuousLayout(points::AbstractArray)
+        @assert all(0 .<= points .<= 1) "All points must be normalized in the range [0, 1]"
+        new(points, size(points, 1))
     end
 end
 
-function union(A::ContinuousLayout, B::ContinuousLayout)
-    points = union(A.points, B.points)
-    return ContinuousLayout(points)
-end
-
-function setdiff(A::ContinuousLayout, B::ContinuousLayout)
-    points = setdiff(A.points, B.points)
-    return ContinuousLayout(points)
-end
+CuArray(layout::ContinuousLayout) = ContinuousLayout(CuArray(layout.points))
+Array(layout::ContinuousLayout) = ContinuousLayout(Array(layout.points))

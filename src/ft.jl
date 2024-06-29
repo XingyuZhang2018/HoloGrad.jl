@@ -1,10 +1,10 @@
 function preloc_cft(layout, signal)
     Nx, Ny = size(signal)
     points = layout.points
-    u = [p[1] for p in points]
-    v = [p[2] for p in points]
-    x = 0:Nx-1
-    y = 0:Ny-1
+    u = @view points[:, 1]
+    v = @view points[:, 2]
+    x = isa(points, CuArray) ? CuArray(0:Nx-1) : 0:Nx-1
+    y = isa(points, CuArray) ? CuArray(0:Ny-1) : 0:Ny-1
     X = exp.(-2im * π * u * x')
     Y = exp.(-2im * π * y * v')
     iX = exp.(2im * π * x * u')

@@ -3,10 +3,10 @@ function fixed_point_map(layout::Layout, slm::SLM, B)
     X, Y, iX, iY = preloc_cft(layout, field)
     trap = cft(field, X, Y)
     trap_ϕ = angle.(trap)
-    trap_A = normalize(abs.(trap))
+    trap_A = abs.(trap)
     reweight = mean(trap_A) ./ trap_A
     B = B .* reweight
-    v_forced_trap = normalize(B) .* exp.(1im * trap_ϕ)
+    v_forced_trap = B .* exp.(1im * trap_ϕ)
     t = icft(v_forced_trap, iX, iY)
     ϕ = (angle.(t) ) .* (0.5 / π) * slm.SLM2π
     return [mod.(ϕ, slm.SLM2π), B]
@@ -83,7 +83,7 @@ Returns:
 Currently dx/dt and the time step are linearly fixed.
 """
 function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, algorithm; 
-                        slices=5, 
+                        slices=5,
                         interps=5, 
                         aditers=10,
                         ifflow=true)

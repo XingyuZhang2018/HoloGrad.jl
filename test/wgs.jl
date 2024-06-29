@@ -1,12 +1,12 @@
 using qgh
 using Test
 
-@testset "wgs cft" begin
+@testset "wgs cft with $atype" for atype in test_atypes
     Random.seed!(42)
-    points = [rand(2) for _ in 1:10]
+    points = atype(rand(10, 2))
     layout = ContinuousLayout(points)
-    slm = SLM(10)
+    slm = atype(SLM(10))
     algorithm = WGS()
-    slm_padding, cost = match_image(layout, slm, algorithm)
+    slm, cost = match_image(layout, slm, algorithm)
     @test cost < 1e-6
 end

@@ -4,11 +4,12 @@ using ForwardDiff
 using KrylovKit
 using Test
 using Zygote
+using Random
 
-function test_config_continuous()
-    points = [rand(2) for _ in 1:10]
+function test_config_continuous(atype)
+    points = atype(rand(10, 2))
     layout = ContinuousLayout(points)
-    slm = SLM(10)
+    slm = atype(SLM(10))
     algorithm = WGS(verbose=false)
     slm, cost, B = match_image(layout, slm, algorithm)
     return layout, slm, B
@@ -32,18 +33,18 @@ function num_grad(f, a::AbstractArray; δ::Real=1e-5)
     return (df)
 end
 
-@testset "fixed_point_map" begin
+@testset "fixed_point_map with $atype" for atype in test_atypes
     Random.seed!(42)
 
-    layout, slm, B = test_config_continuous()
+    layout, slm, B = test_config_continuous(atype)
     ϕ_new, B_new = fixed_point_map(layout, slm, B)
     @test ϕ_new ≈ slm.ϕ 
     @test B_new ≈ B
 end
 
-@testset "∂f/∂A and ∂f/∂ϕ " begin
+@testset "∂f/∂A and ∂f/∂ϕ with $atype" for atype in test_atypes
     Random.seed!(42)
-    layout, slm, B = test_config_continuous()
+    layout, slm, B = test_config_continuous(atype)
     # ∂f∂x = ForwardDiff.jacobian(x -> fixed_point_map(ContinuousLayout(x), slm, B), layout.points)[1]
 
     # dxdt = [1e-5 * randn(2) for _ in 1:length(layout.points)]
@@ -64,9 +65,9 @@ end
 
 end
 
-@testset "dϕ/dt " begin
+@testset "dϕ/dt with $atype" for atype in [Array]
     Random.seed!(42)
-    layout, slm, B = test_config_continuous()
+    layout, slm, B = test_config_continuous(atype)
 
     dxdt = 1e-5 * layout.points
     dϕBdt = get_dϕBdt(layout, slm, B, dxdt)
@@ -74,16 +75,19 @@ end
     @test size(dϕBdt[2]) == size(B)
 end
 
-@testset "evolution_slm continuous" begin
+@testset "evolution_slm continuous with $atype" for atype in test_atypes
     Random.seed!(42)
-    points = [rand(2) for _ in 1:5]
+    points = atype(rand(5, 2))
     layout = ContinuousLayout(points)
-    points_new = points .+ 0.1 * [[0, 1]]
+    points_new = points + 1e-5 * atype(randn(size(points)))
     layout_new = ContinuousLayout(points_new)
-    slm = SLM(10)
+    slm = atype(SLM(10))
 
-    layouts, slms = evolution_slm(layout, layout_new, slm, WGS(verbose=false); iters=5)
-    # for i in 1:length(slms)-1
+    layouts, slms = evolution_slm(layout, layout_new, slm, WGS(verbose=false);
+                                   slices=5, 
+                                   interps=1, 
+                                   aditers=5,
+                                   ifflow=true)
     #     d = ϕdiff(slms[i+1], slms[i])
     #     println(maximum(abs.(d)))
     # end

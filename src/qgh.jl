@@ -13,8 +13,9 @@ module qgh
     using OMEinsum
     using Zygote
     
-    import Base: intersect, union, setdiff
+    import Base: intersect, union, setdiff, Array
     import Plots: plot
+    import CUDA: CuArray
     
     export ContinuousLayout, SLM, ϕdiff
     export match_image, WGS, evolution_slm

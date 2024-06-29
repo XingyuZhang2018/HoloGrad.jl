@@ -2,7 +2,8 @@ using qgh
 
 # butterfly continuous layout
 function layout_example(::Val{:butterflycontinuous}; α = 0.0)
-    points = []
+    points = Array{Float64, 2}([[] []])
+    
     for i in [[43, 90], [55, 151], [76, 186], [92, 238], [116, 278], [134, 
         317], [138, 377], [127, 417], [148, 475], [182, 471], [211, 
         427], [231, 384], [254, 324], [271, 374], [294, 425], [315, 
@@ -10,7 +11,7 @@ function layout_example(::Val{:butterflycontinuous}; α = 0.0)
         285], [408, 242], [431, 211], [446, 159], [461, 108], [431, 
         68], [401, 67], [364, 75], [330, 114], [299, 145], [270, 185], [238,
         196], [211, 151], [183, 117], [156, 87], [119, 60], [82, 51]]
-        push!(points, [512-i[2],round(Int, (1-α)*i[1]+256*α)]/512)
+        points = vcat(points, [512-i[2] round(Int, (1-α)*i[1]+256*α)]/512)
     end
     ContinuousLayout(points)
 end

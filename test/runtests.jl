@@ -1,5 +1,8 @@
 using qgh
 using Test
+using CUDA
+
+test_atypes = [Array]
 
 @testset "qgh.jl" begin
     include("configuration.jl")

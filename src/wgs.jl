@@ -28,6 +28,7 @@ end
 """
 function match_image(layout::Layout, slm::SLM, algorithm::WGS)
     target_A_reweight = ones(layout.ntrap) / sqrt(layout.ntrap)
+    layout.points isa CuArray && (target_A_reweight = CuArray(target_A_reweight))
     match_image(layout, slm, target_A_reweight, algorithm)
 end
 
