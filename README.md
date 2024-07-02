@@ -7,13 +7,21 @@
 This is a Julia project for quantum graph homology.
 
 ## Installation
+```shell
+> git clone https://github.com/XingyuZhang2018/qgh
+```
+move to the file and run `julia REPL`, press `]` into `Pkg REPL`
+```julia
+(@v1.10) pkg> activate .
+Activating project at `~/../qgh`
+```
 
 ```julia
-] instantiate
+(qgh) instantiate
 ```
 
 ## Usage
 
-please see the examples in the `examples` folder.
+please see the examples in the `example` folder.
 
 
