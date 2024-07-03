@@ -17,7 +17,7 @@ Activating project at `~/../qgh`
 ```
 
 ```julia
-(qgh) instantiate
+(qgh) pkg> instantiate
 ```
 
 ## Usage

@@ -80,7 +80,7 @@ function one_step!(A, ϕ, field, SLM2π, trap, trap_A, trap_ϕ, target_A_reweigh
 
     # compute phase front at SLM
     t = icft(v_forced_trap, iX, iY)
-    ϕ .= angle.(t) .* (0.5 / π) * SLM2π
+    ϕ .= round.(angle.(t) .* (0.5 / π) * SLM2π)
     field .= A .* exp.(2im * π * ϕ  / SLM2π)
 
     trap .= cft(field, X, Y)

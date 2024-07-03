@@ -8,5 +8,5 @@ using Test
     slm = atype(SLM(10))
     algorithm = WGS()
     slm, cost = match_image(layout, slm, algorithm)
-    @test cost < 1e-6
+    @test cost < 1e-2
 end

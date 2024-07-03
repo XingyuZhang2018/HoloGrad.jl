@@ -8,7 +8,7 @@ function fixed_point_map(layout::Layout, slm::SLM, B)
     B = B .* reweight
     v_forced_trap = B .* exp.(1im * trap_ϕ)
     t = icft(v_forced_trap, iX, iY)
-    ϕ = (angle.(t) ) .* (0.5 / π) * slm.SLM2π
+    ϕ = round.((angle.(t) ) .* (0.5 / π) * slm.SLM2π)
     return [mod.(ϕ, slm.SLM2π), B]
 end
 
@@ -41,6 +41,7 @@ function get_dϕdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5)
         end
         return slm.ϕ
     end
+    
     dϕdt = ForwardDiff.derivative(dt -> f(dt), 0.0)
     return dϕdt
 end
