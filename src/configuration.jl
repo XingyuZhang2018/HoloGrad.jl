@@ -9,11 +9,11 @@ struct SLM
 end
 
 SLM(A::AbstractArray{Float64,2}) = SLM(normalize(A), 2 * pi * rand(size(A)...), 208.0) 
-function SLM(K::Int)
+SLM(L::Int) = SLM(L, L)
+function SLM(Lx::Int, Ly::Int)
     norm_waist = round(Int, 12.36*1e-3/2/(12.5*1e-6)) # waist normalized by the SLM pixel size
-    range_xy = LinRange(-K÷2+1, K÷2, K)
-    x = repeat(range_xy, 1, K)
-    y = repeat(range_xy', K, 1)
+    x = repeat(LinRange(-Lx÷2+1, Lx÷2, Lx), 1, Ly)
+    y = repeat(LinRange(-Ly÷2+1, Ly÷2, Ly)', Lx, 1)
     d = sqrt.(x .^ 2 .+ y .^ 2)
     g = exp.((-2 / norm_waist^2) .* d .^ 2)  # Intensity
     return SLM(g)

@@ -9,10 +9,14 @@ using qgh: ContinuousLayout, SLM
 end
 
 @testset "default_slm with $atype" for atype in test_atypes
+    slm = atype(SLM(10, 5))
+    @test size(slm.A) == (10, 5)
+    @test size(slm.ϕ) == (10, 5)
+    @test slm.SLM2π == 208.0
+
     slm = atype(SLM(10))
     @test size(slm.A) == (10, 10)
     @test size(slm.ϕ) == (10, 10)
-    @test slm.SLM2π == 208.0
 
     @test slm.A isa atype
     @test slm.ϕ isa atype
