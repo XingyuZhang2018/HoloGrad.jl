@@ -8,7 +8,7 @@ function fixed_point_map(layout::Layout, slm::SLM, B)
     B = B .* reweight
     v_forced_trap = B .* exp.(1im * trap_ϕ)
     t = icft(v_forced_trap, iX, iY)
-    ϕ = round.((angle.(t) ) .* (0.5 / π) * slm.SLM2π)
+    ϕ = ((angle.(t) ) .* (0.5 / π) * slm.SLM2π)
     return [mod.(ϕ, slm.SLM2π), B]
 end
 
@@ -17,7 +17,7 @@ Get the time derivative of the phase in the SLM plane by the implicit function t
 """
 function get_dϕBdt(layout::Layout, slm::SLM, B, dxdt; atol=1e-12, maxiter=1)
     b = ForwardDiff.derivative(dt -> fixed_point_map(ContinuousLayout(layout.points + dxdt*dt), slm, B), 0.0)
-    dϕBdt, info = linsolve(dϕBdt -> ((I(size(dϕBdt,1)) .* (1 + 1e-6)) * dϕBdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕBdt[1] * dt, slm.SLM2π), B + dϕBdt[2] * dt), 0.0)), b; atol, maxiter)
+    dϕBdt, info = linsolve(dϕBdt -> ((I(size(dϕBdt,1)) .* (1 + 1e-10)) * dϕBdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕBdt[1] * dt, slm.SLM2π), B + dϕBdt[2] * dt), 0.0)), b; atol, maxiter)
     info.converged == 0 && @warn "dϕBdt not converged."
     return dϕBdt
 end
@@ -39,11 +39,12 @@ function get_dϕdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5)
             ϕ, B = fixed_point_map(layout, slm, B)
             slm = SLM(slm.A, ϕ, slm.SLM2π)
         end
-        return slm.ϕ
+        return slm.ϕ, B
     end
     
-    dϕdt = ForwardDiff.derivative(dt -> f(dt), 0.0)
-    return dϕdt
+    dϕdt = ForwardDiff.derivative(dt -> f(dt)[1], 0.0)
+    dBdt = ForwardDiff.derivative(dt -> f(dt)[2], 0.0)
+    return dϕdt, ForwardDiff.value.(dBdt)
 end
 
 function optimize_dt(layout::Layout, slm::SLM, dϕdt, dxdt; 
@@ -63,6 +64,17 @@ function optimize_dt(layout::Layout, slm::SLM, dϕdt, dxdt;
                    callback=os->writelog(os, iters, show_every, verbose)),
                    )
     return res.minimizer[1]
+end
+
+function writelog(os::OptimizationState, iters, show_every, verbose)
+    message = "$(round(os.metadata["time"],digits=1))    $(os.iteration)    $(round(os.value,digits=8))    $(round(os.g_norm,digits=8))\n"
+
+    if verbose && (iters % show_every == 0)
+        printstyled(message; bold=true, color=:blue)
+        flush(stdout)
+    end
+
+    return false
 end
 
 """
@@ -95,27 +107,44 @@ function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, a
     dxdt = Δx
 
     slm, cost, B = match_image(layout, slm, algorithm)
-    # dϕdt = get_dϕdt(layout, slm, B, dxdt, 5)
+    dϕdt, dBdt = get_dϕdt(layout, slm, B, dxdt, aditers)
 
     slms = [slm]
     layouts = [layout]
     for i in 1:slices
-        println("Step $i/$slices")
+        println("Slices Step $i/$slices")
         if ifflow    
-            layout = ContinuousLayout(points + (i-1)*Δx)
-            slm, cost, B = match_image(layout, slm, B, algorithm)
+            layout_new = ContinuousLayout(points + i*Δx)
+            slm_new, cost, B = match_image(layout_new, slm, B, algorithm)
+
             t0 = time()
-            # dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
-            dϕdt = get_dϕdt(layout, slm, B, dxdt, aditers) # by iterations
+            # dϕdt_new, dBdt_new = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
+            dϕdt_new, dBdt_new = get_dϕdt(layout_new, slm_new, B, dxdt, aditers) # by iterations
             t1 = time()
+            print(@sprintf("    Finish dϕdt time = %.2f s\n", t1-t0))
+
+            _, trap_A_mean = compute_cost(slm, layout)
+            _, trap_A_mean_new = compute_cost(slm_new, layout_new)
+
             for j in 1:interps
-                slm = SLM(slm.A, slm.ϕ + dϕdt * dt/interps, slm.SLM2π)
-                push!(slms, slm)
-                push!(layouts, layout)
+                layout_interp = ContinuousLayout(layout_new.points - (interps - j) * Δx / interps)
+                if j <= interps/2
+                    slm_interp = SLM(slm.A, slm.ϕ + j * dϕdt * dt/interps, slm.SLM2π)
+                    variance, decay_rate = compute_cost(slm_interp, layout_interp, trap_A_mean)
+                else
+                    slm_interp = SLM(slm_new.A, slm_new.ϕ - (interps - j) * dϕdt_new * dt/interps, slm_new.SLM2π)
+                    variance, decay_rate = compute_cost(slm_interp, layout_interp, trap_A_mean_new)
+                end
+
+                print(@sprintf("\tinterpolation Step %d/%d: A variance = %.3e decay rate = %.8f\n", j, interps, variance, decay_rate))
+
+                push!(slms, slm_interp)
+                push!(layouts, layout_interp)
             end
-            layout = ContinuousLayout(points + i*Δx)
-            cost = compute_cost(slm, layout)
-            print(@sprintf("Finish dϕdt \n  time = %.2f s, cost = %.3e\n", t1-t0, cost))
+
+            slm = slm_new
+            dϕdt = dϕdt_new
+            layout = layout_new
         else
             layout = ContinuousLayout(points + i*Δx)
             slm, cost, B = match_image(layout, slm, B, algorithm)

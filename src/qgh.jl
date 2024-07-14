@@ -19,7 +19,7 @@ module qgh
     
     export ContinuousLayout, SLM, ϕdiff
     export match_image, WGS, evolution_slm
-    export plot, plot_slms_ϕ_diff, plot_gif
+    export plot, plot_slms_ϕ_diff, plot_gif, plot_decay
     
     module Defaults
         const atype = Array 
@@ -31,7 +31,8 @@ module qgh
     end
 
     include("configuration.jl")
-    include("utils.jl")
+    include("utils/error_analysis.jl")
+    include("utils/plot.jl")
     include("ft.jl")
     include("wgs.jl")
     include("fixedpoint.jl")
