@@ -88,8 +88,8 @@ function plot_gif(slms, Nu, Nv)
     gif(anim, fps=length(slms)÷3)
 end
 
-plot_decay(slms, N::Int) = plot_decay(slms, N, N)
-plot_decay(p, slms, N::Int) = plot_decay(p, slms, N, N)
+plot_decay(slms, N::Int; kwarg...) = plot_decay(slms, N, N; kwarg...)
+plot_decay(p, slms, N::Int; kwarg...) = plot_decay(p, slms, N, N; kwarg...)
 function plot_decay(slms, Nu::Int, Nv::Int)
     p = Plots.plot()
     plot_decay(p, slms, Nu, Nv)

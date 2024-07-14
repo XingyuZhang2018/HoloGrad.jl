@@ -99,7 +99,9 @@ function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, a
                         slices=5,
                         interps=5, 
                         aditers=10,
-                        ifflow=true)
+                        ifflow=true,
+                        ifimplicit=false
+                        )
 
     points = layout.points
     Δx = (layout_end.points - layout.points) / slices # linear interpolation 
@@ -118,8 +120,11 @@ function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, a
             slm_new, cost, B = match_image(layout_new, slm, B, algorithm)
 
             t0 = time()
-            # dϕdt_new, dBdt_new = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
-            dϕdt_new, dBdt_new = get_dϕdt(layout_new, slm_new, B, dxdt, aditers) # by iterations
+            if ifimplicit
+                dϕdt_new, dBdt_new = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
+            else
+                dϕdt_new, dBdt_new = get_dϕdt(layout_new, slm_new, B, dxdt)
+            end
             t1 = time()
             print(@sprintf("    Finish dϕdt time = %.2f s\n", t1-t0))
 

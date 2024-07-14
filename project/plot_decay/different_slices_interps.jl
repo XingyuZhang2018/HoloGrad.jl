@@ -24,26 +24,27 @@ let
     
     p = Plots.plot(layout=(1, 2), size=(800, 450), margin=5Plots.mm)
 
+    #benchmark
+    layouts, slms = evolution_slm(layout, layout_new, slm, algorithm; 
+                                slices=100, 
+                                interps=1, 
+                                aditers=5,
+                                ifflow=false,
+                                ifimplicit=false)
+
+    display(plot_decay(p[1], slms, 100; linewidth=5))
+    display(plot_decay(p[2], layouts, slms, 100, 1; linewidth=5))
 
     for slices in 5:5:20, interps in 10:2:10
         layouts, slms = evolution_slm(layout, layout_new, slm, algorithm; 
                                       slices, 
                                       interps, 
                                       aditers=5,
-                                      ifflow=true)
+                                      ifflow=true,
+                                      ifimplicit=false)
 
         # display(plot_gif(slms))
-        display(plot_decay(p[1], slms, 100))
+        display(plot_decay(p[1], slms, 100; linewidth=2))
         display(plot_decay(p[2], layouts, slms, slices, interps; linewidth=2))
     end
-
-    #benchmark
-    layouts, slms = evolution_slm(layout, layout_new, slm, algorithm; 
-                                slices=100, 
-                                interps=1, 
-                                aditers=5,
-                                ifflow=false)
-
-    display(plot_decay(p[1], slms, 100))
-    display(plot_decay(p[2], layouts, slms, 100, 1; linewidth=5))
 end
