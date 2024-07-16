@@ -33,3 +33,4 @@ function compute_cost(slm::SLM, layout::Layout, trap_A_mean_origin::Real)
     
     return cost, A_ratio
 end
+

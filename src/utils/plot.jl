@@ -36,18 +36,39 @@ function plot(layouts, slms)
         for j in 1:size(layouts[i].points, 1)
             image[round.(Int, clamp!([layouts[i].points[j, 1] * Nx, layouts[i].points[j, 2] * Ny], 1.0, Nx))...] = F[j]
         end
-        Plots.heatmap!(p[i], abs.(image), colorbar=false, aspect_ratio=:equal, ticks=false, yticks=false)
+        Plots.heatmap!(p[i], abs.(image), colorbar=false, aspect_ratio=:equal, ticks=false)
     end
     heatmap!(p, size=(200*length(slms), 200))
 end
 
-plot(slms, N::Int) = plot(slms, N, N)
-function plot(slms, Nu, Nv)
+heatmap!(p, slm::SLM, N::Int; kwarg...) = heatmap!(p, slm::SLM, N, N; kwarg...)
+function heatmap!(p, slm::SLM, Nu::Int, Nv::Int; kwarg...)
+    fourier = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
+    X, Y = preloc_cft(fourier , Nu, Nv)
+    image = cft_m(fourier, X, Y)
+    Plots.heatmap!(p, Array(abs.(image)), colorbar=false, aspect_ratio=:equal, ticks=false, frame=:none; kwarg...)
+end
+
+heatmap_slm_diff!(p, slm1::SLM, slm2::SLM, N::Int; kwarg...) = heatmap_slm_diff!(p, slm1, slm2, N, N; kwarg...)
+function heatmap_slm_diff!(p, slm1::SLM, slm2::SLM, Nu::Int, Nv::Int; kwarg...)
+    X, Y = preloc_cft(slm1.ϕ, Nu, Nv)
+    fourier1 = slm1.A .* exp.(slm1.ϕ * (2im * π / slm1.SLM2π))
+    fourier2 = slm2.A .* exp.(slm2.ϕ * (2im * π / slm2.SLM2π))
+    image1 = cft_m(fourier1, X, Y)
+    image2 = cft_m(fourier2, X, Y)
+    Plots.heatmap!(p, Array(abs.(abs.(image1) .- abs.(image2))), 
+                   aspect_ratio=:equal, 
+                   ticks=false, 
+                   frame=:none;
+                   kwarg...
+                   )
+end
+
+heatmap!(slms, N::Int; kwarg...) = heatmap!(slms, N, N; kwarg...)
+function heatmap!(slms, Nu, Nv; kwarg...)
     p = Plots.plot(layout=(1, length(slms)))
     for i in 1:length(slms)
-        fourier = slms[i].A .* exp.(slms[i].ϕ * (2im * π / slms[i].SLM2π))
-        image = cft(fourier, Nu, Nv)
-        Plots.heatmap!(p[i], abs.(image), colorbar=false, aspect_ratio=:equal, ticks=false, yticks=false)
+        heatmap!(p[i], slms[i], Nu, Nv; kwarg...)
     end
     heatmap!(p, size=(200*length(slms), 200))
 end
@@ -60,6 +81,12 @@ function plot_slms_ϕ_diff(slms)
         Plots.hline!(p[i], Array([mean(abs.(d))]), color=:red, linestyle=:dash)
     end
     Plots.bar!(p, size=(200*length(slms), 200))
+end
+
+function plot_slms_ϕ_diff(p, slm::SLM, slm_new::SLM)
+    d = ϕdiff(slm, slm_new)
+    Plots.bar!(p, 1:length(d), Array(d[:]), legend=false, framestyle=:box, xticks=false)
+    Plots.hline!(p, Array([mean(abs.(d))]), color=:red, linestyle=:dash)
 end
 
 function plot_gif(slms)
@@ -148,7 +175,7 @@ function plot_decay(p, layouts, slms, slices, interps; linewidth=2)
     x = LinRange(0, 1, length(slms))
     Plots.plot!(p, x, A_ratios, 
                 xlim=(0, 1), 
-                ylim=(0, 1), 
+                # ylim=(0, 1), 
                 # seriestype = :scatter,
                 label="key points = $slices interps = $interps", 
                 xlabel="t", 
