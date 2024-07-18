@@ -66,6 +66,25 @@ function optimize_dt(layout::Layout, slm::SLM, dϕdt, dxdt;
     return res.minimizer[1]
 end
 
+function optimize_dt(layout::Layout, slm::SLM, dϕdt; 
+                     f_tol=1e-6, 
+                     iters=100, 
+                     show_every=10,
+                     verbose=false
+                     )
+    loss(dt) = compute_cost(SLM(slm.A, slm.ϕ + dϕdt * dt[1], slm.SLM2π), layout)[1]
+    loss_g(dt) = Zygote.gradient(loss, dt[1])
+    # loss_g(dt) = ForwardDiff.derivative(loss, abs(dt[1]))
+
+    res = optimize(loss, loss_g, 
+                   [1.0], LBFGS(m = 20), inplace = false,
+                   Optim.Options(f_tol=f_tol, iterations=iters,
+                   extended_trace=true,
+                   callback=os->writelog(os, iters, show_every, verbose)),
+                   )
+    return res.minimizer[1]
+end
+
 function writelog(os::OptimizationState, iters, show_every, verbose)
     message = "$(round(os.metadata["time"],digits=1))    $(os.iteration)    $(round(os.value,digits=8))    $(round(os.g_norm,digits=8))\n"
 
@@ -100,16 +119,26 @@ function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, a
                         interps=5, 
                         aditers=10,
                         ifflow=true,
-                        ifimplicit=false
+                        ifimplicit=false,
+                        ifpureinterp=false
                         )
 
     points = layout.points
     Δx = (layout_end.points - layout.points) / slices # linear interpolation 
     dt = 1
-    dxdt = Δx
+    dxdt = Δx/dt
 
     slm, cost, B = match_image(layout, slm, algorithm)
-    dϕdt, dBdt = get_dϕdt(layout, slm, B, dxdt, aditers)
+    slm_new, cost, B_new = match_image(layout_end, slm, copy(B), algorithm)
+    if ifpureinterp
+        dϕdt = (slm_new.ϕ - slm.ϕ) / slices
+    else
+        if ifimplicit
+            dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
+        else
+            dϕdt, dBdt = get_dϕdt(layout, slm, B, dxdt)
+        end
+    end
 
     slms = [slm]
     layouts = [layout]
@@ -120,10 +149,14 @@ function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, a
             slm_new, cost, B = match_image(layout_new, slm, B, algorithm)
 
             t0 = time()
-            if ifimplicit
-                dϕdt_new, dBdt_new = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
+            if ifpureinterp
+                dϕdt_new = (slm_new.ϕ - slm.ϕ) / slices
             else
-                dϕdt_new, dBdt_new = get_dϕdt(layout_new, slm_new, B, dxdt)
+                if ifimplicit
+                    dϕdt_new, dBdt_new = get_dϕBdt(layout_new, slm_new, B, dxdt) # by implicit function theorem
+                else
+                    dϕdt_new, dBdt_new = get_dϕdt(layout_new, slm_new, B, dxdt)
+                end
             end
             t1 = time()
             print(@sprintf("    Finish dϕdt time = %.2f s\n", t1-t0))
@@ -135,9 +168,15 @@ function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, a
                 layout_interp = ContinuousLayout(layout_new.points - (interps - j) * Δx / interps)
                 if j <= interps/2
                     slm_interp = SLM(slm.A, slm.ϕ + j * dϕdt * dt/interps, slm.SLM2π)
+                    # dt = optimize_dt(layout_interp, slm, dϕdt)
+                    # @show dt
+                    # slm_interp = SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π)
                     variance, decay_rate = compute_cost(slm_interp, layout_interp, trap_A_mean)
                 else
                     slm_interp = SLM(slm_new.A, slm_new.ϕ - (interps - j) * dϕdt_new * dt/interps, slm_new.SLM2π)
+                    # dt = optimize_dt(layout_interp, slm_new, -dϕdt_new)
+                    # @show dt
+                    # slm_interp = SLM(slm_new.A, slm_new.ϕ - dϕdt_new * dt, slm_new.SLM2π)
                     variance, decay_rate = compute_cost(slm_interp, layout_interp, trap_A_mean_new)
                 end
 

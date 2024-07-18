@@ -34,3 +34,24 @@ function compute_cost(slm::SLM, layout::Layout, trap_A_mean_origin::Real)
     return cost, A_ratio
 end
 
+function kl_divergence(A::AbstractArray, B::AbstractArray) 
+    A = abs.(A)
+    A ./= sum(A)
+    B = abs.(B)
+    B ./= sum(B)
+
+    div_log = A ./ B
+    # @show div_log
+    # div_log[div_log .== 0] .= 1   
+    return sum(A .* log.(div_log))
+end
+
+find_max_intensity(slm::SLM, area, N::Int) = find_max_intensity(slm, area, N, N)
+function find_max_intensity(slm::SLM, area, Nu::Int, Nv::Int)
+    fourier = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
+    X, Y = preloc_cft(fourier , Nu, Nv)
+    image = cft_m(fourier, X, Y)
+
+    max_intensity, index = findmax(abs.(image[area[1][1]:area[2][1], area[1][2]:area[2][2]]))
+    return max_intensity, [area[1][1] + index[1] - 1, area[1][2] + index[2] - 1]
+end

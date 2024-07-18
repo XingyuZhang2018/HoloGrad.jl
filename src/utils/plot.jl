@@ -41,12 +41,25 @@ function plot(layouts, slms)
     heatmap!(p, size=(200*length(slms), 200))
 end
 
-heatmap!(p, slm::SLM, N::Int; kwarg...) = heatmap!(p, slm::SLM, N, N; kwarg...)
-function heatmap!(p, slm::SLM, Nu::Int, Nv::Int; kwarg...)
+heatmap(slms, N::Int; kwarg...) = heatmap(slms, N, N; kwarg...)
+function heatmap(slms, Nu, Nv; kwarg...)
+    fig = Figure(size = (200*length(slms), 200); kwarg...)
+    for i in 1:length(slms)
+        ax = Axis(fig[1, i])
+        heatmap!(ax, slms[i], Nu, Nv; kwarg...)
+    end
+    Colorbar(fig[:, end+1]; kwarg...)
+    fig
+end
+
+heatmap!(ax, slm::SLM, N::Int; kwarg...) = heatmap!(ax, slm::SLM, N, N; kwarg...)
+function heatmap!(ax, slm::SLM, Nu::Int, Nv::Int; kwarg...)
     fourier = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
     X, Y = preloc_cft(fourier , Nu, Nv)
     image = cft_m(fourier, X, Y)
-    Plots.heatmap!(p, Array(abs.(image)), colorbar=false, aspect_ratio=:equal, ticks=false, frame=:none; kwarg...)
+
+    CairoMakie.heatmap!(ax, 1:size(image, 1), 1:size(image, 2), Array(abs.(image)); kwarg...)
+    hidedecorations!(ax)
 end
 
 heatmap_slm_diff!(p, slm1::SLM, slm2::SLM, N::Int; kwarg...) = heatmap_slm_diff!(p, slm1, slm2, N, N; kwarg...)
@@ -64,23 +77,13 @@ function heatmap_slm_diff!(p, slm1::SLM, slm2::SLM, Nu::Int, Nv::Int; kwarg...)
                    )
 end
 
-heatmap!(slms, N::Int; kwarg...) = heatmap!(slms, N, N; kwarg...)
-function heatmap!(slms, Nu, Nv; kwarg...)
-    p = Plots.plot(layout=(1, length(slms)))
-    for i in 1:length(slms)
-        heatmap!(p[i], slms[i], Nu, Nv; kwarg...)
-    end
-    heatmap!(p, size=(200*length(slms), 200))
-end
-
-function plot_slms_ϕ_diff(slms)
-    p = Plots.plot(layout=(1, length(slms)-1))
+function plot_slms_ϕ_diff!(ax, slms; kwarg...)
     for i in 1:length(slms)-1
         d = ϕdiff(slms[i+1], slms[i])
-        Plots.bar!(p[i], 1:length(d), Array(d[:]), legend=false, framestyle=:box, xticks=false)
-        Plots.hline!(p[i], Array([mean(abs.(d))]), color=:red, linestyle=:dash)
+        @show compute_cost(d), mean(abs.(d))
+        CairoMakie.barplot!(ax, 1:length(d), Array(d[:]), strokewidth = 0.01; kwarg...)
+        CairoMakie.hlines!(ax, Array([mean(abs.(d))]); kwarg...)
     end
-    Plots.bar!(p, size=(200*length(slms), 200))
 end
 
 function plot_slms_ϕ_diff(p, slm::SLM, slm_new::SLM)
@@ -115,31 +118,32 @@ function plot_gif(slms, Nu, Nv)
     gif(anim, fps=length(slms)÷3)
 end
 
-plot_decay(slms, N::Int; kwarg...) = plot_decay(slms, N, N; kwarg...)
-plot_decay(p, slms, N::Int; kwarg...) = plot_decay(p, slms, N, N; kwarg...)
-function plot_decay(slms, Nu::Int, Nv::Int)
+plot_decay(slms_exact, slms_flow, N::Int; kwarg...) = plot_decay(slms_exact, slms_flow, N, N; kwarg...)
+plot_decay(p, slms_exact, slms_flow, N::Int; kwarg...) = plot_decay(p, slms_exact, slms_flow, N, N; kwarg...)
+function plot_decay(slms_exact, slms_flow, Nu::Int, Nv::Int; kwarg...)
     p = Plots.plot()
-    plot_decay(p, slms, Nu, Nv)
+    plot_decay(p, slms_exact, slms_flow, Nu, Nv; kwarg...)
 end
 
-function plot_decay(p, slms, Nu::Int, Nv::Int; linewidth=2)
+function plot_decay(p, slms_exact, slms_flow, Nu::Int, Nv::Int; kwarg...)
     y = []
-    X, Y = preloc_cft(slms[1].ϕ, Nu, Nv)
-    for i in 1:length(slms)
-        fourier = slms[i].A .* exp.(slms[i].ϕ * (2im * π / slms[i].SLM2π))
-        image = cft_m(fourier, X, Y)
-        push!(y, compute_cost(image))
+    X, Y = preloc_cft(slms_exact[1].ϕ, Nu, Nv)
+    for i in 1:length(slms_exact)
+        fourier_exact = slms_exact[i].A .* exp.(slms_exact[i].ϕ * (2im * π / slms_exact[i].SLM2π))
+        image_exact = cft_m(fourier_exact, X, Y)
+        fourier_flow = slms_flow[i].A .* exp.(slms_flow[i].ϕ * (2im * π / slms_flow[i].SLM2π))
+        image_flow = cft_m(fourier_flow, X, Y)
+        push!(y, kl_divergence(image_exact, image_flow))
     end
 
-    x = LinRange(0, 1, length(slms))
+    x = LinRange(0, 1, length(slms_exact))
     Plots.plot!(p, x, y, 
                 label=false, 
                 xlim=(0, 1), 
                 xlabel="t", 
-                ylabel="A variance",
-                linewidth=linewidth
-                )
-    # scatter!(p, x, y, label=false)
+                ylabel="KL divergence";
+                kwarg...)
+    Plots.scatter!(p, x, y, label=false; kwarg...)
 end
 
 function plot_decay(layouts, slms, slices, interps)
@@ -183,4 +187,59 @@ function plot_decay(p, layouts, slms, slices, interps; linewidth=2)
                 linewidth=linewidth
                 )
     # scatter!(p, x, A_ratios, label=false)
+end
+
+plot_adjacent_KL(p, slms, N::Int; kwarg...) = plot_adjacent_KL(p, slms, N, N; kwarg...)
+function plot_adjacent_KL(p, slms, Nu::Int, Nv::Int; kwarg...)
+    y = []
+    X, Y = preloc_cft(slms[1].ϕ, Nu, Nv)
+    fourier = slms[1].A .* exp.(slms[1].ϕ * (2im * π / slms[1].SLM2π))
+    image = cft_m(fourier, X, Y)
+    for i in 2:length(slms)
+        fourier = slms[i].A .* exp.(slms[i].ϕ * (2im * π / slms[i].SLM2π))
+        image_new = cft_m(fourier, X, Y)
+        push!(y, kl_divergence(image, image_new))
+
+        image = image_new
+    end
+
+    x = 1:length(slms)-1
+    Plots.plot!(p, x, y, 
+                label=false, 
+                xlim=(0, 1), 
+                xlabel="t", 
+                ylabel="KL divergence";
+                kwarg...)
+    Plots.scatter!(p, x, y, label=false; kwarg...)
+end
+
+plot_intensity_decay!(ax, slms, area, N::Int; kwarg...) = plot_intensity_decay!(ax, slms, area, N, N; kwarg...)
+function plot_intensity_decay!(ax, slms, area, Nu::Int, Nv::Int; kwarg...)
+    x = []
+    intensities = []
+    
+    for slm in slms
+        intensity, index = find_max_intensity(slm, area, Nu, Nv)
+        push!(x, index[1])
+        push!(intensities, intensity)
+    end
+    lines!(ax, x, intensities; kwarg...)
+    CairoMakie.scatter!(ax, x, intensities; kwarg...)
+end
+
+plot_move_distance!(ax, slms, area, N::Int; kwarg...) = plot_move_distance!(ax, slms, area, N, N; kwarg...)
+function plot_move_distance!(ax, slms, area, Nu::Int, Nv::Int; kwarg...)
+    distances = []
+    for slm in slms
+        intensity, index = find_max_intensity(slm, area, Nu, Nv)
+        push!(distances, index[1])
+    end
+    x = LinRange(0, 1, length(slms))
+    lines!(ax, x, distances; kwarg...)
+    CairoMakie.scatter!(ax, x, distances; markersize = 5, kwarg...)
+end
+
+function plot_rectange!(ax, area)
+    vertices = Point2f[area[1], (area[2][1], area[1][2]), area[2], (area[1][1], area[2][2])]
+    poly!(ax, vertices, color = (:red, 0.0), strokewidth = 2, strokecolor = :red)
 end

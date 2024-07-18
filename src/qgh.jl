@@ -1,5 +1,6 @@
 module qgh
 
+    using CairoMakie
     using CUDA
     using FFTW
     using ForwardDiff
