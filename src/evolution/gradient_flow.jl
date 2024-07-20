@@ -32,7 +32,7 @@ end
 """
     Get the time derivative of the phase in the SLM plane by iterations.
 """
-function get_dϕdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5)
+function get_dϕBdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5)
     function f(dt)
         layout = ContinuousLayout(layout.points + dxdt*dt)
         for _ in 1:iters
@@ -96,6 +96,20 @@ function writelog(os::OptimizationState, iters, show_every, verbose)
     return false
 end
 
+function get_flow_params(slm, layout::Layout, layout_end::Layout)
+    Nx, Ny = size(slm.A)
+    one_piexl = 1 / Nx
+    interval = layout_end.points - layout.points
+    interval_norm = [norm(interval[i, :]) for i in 1:size(interval, 1)]
+    interval_max, index = findmax(interval_norm)
+    ratio = one_piexl / interval_max * 0.5 # 0.5 currently is the experimental value, which decides the distance between two keypoints
+    dxdt = ratio * interval / 2 # 2 currently is the experimental value, which decides the speed of the flow
+    Δx = interval * ratio  
+    keypoints = ceil(Int, 1/ratio)
+    end_interps_ratio = mod(1/ratio, 1)
+    return dxdt, keypoints, Δx, end_interps_ratio
+end
+
 """
 evolution slm by matching the image of layout and slm.
 
@@ -106,96 +120,74 @@ Args:
     algorithm (Algorithm): the algorithm to match the image.
     
 Keyword Args:
-    iters (Int): the number of interpolation between layout and layout_end.
+    interps (Int): the number of interpolation between two ket points.
+    aditers (Int): the number of iterations to get the time derivative of the phase in the SLM plane.
+    ifimplicit (Bool): if use the implicit function theorem to get the time derivative of the phase in the SLM plane.
 
 Returns:
     layouts (Array{Layout}): the layouts of traps.
     slms (Array{SLM}): the SLMs.
-
-Currently dx/dt and the time step are linearly fixed.
 """
-function evolution_slm(layout::ContinuousLayout, layout_end::Layout, slm::SLM, algorithm; 
-                        slices=5,
-                        interps=5, 
-                        aditers=10,
-                        ifflow=true,
-                        ifimplicit=false,
-                        ifpureinterp=false
-                        )
-
+function evolution_slm_flow(layout::ContinuousLayout, layout_end::Layout, slm::SLM, algorithm;
+                            interps=5, 
+                            aditers=10,
+                            ifimplicit=false
+                            )
+    
+    dxdt, keypoints, Δx, end_interps_ratio = get_flow_params(slm, layout, layout_end)
     points = layout.points
-    Δx = (layout_end.points - layout.points) / slices # linear interpolation 
     dt = 1
-    dxdt = Δx/dt
 
     slm, cost, B = match_image(layout, slm, algorithm)
     slm_new, cost, B_new = match_image(layout_end, slm, copy(B), algorithm)
-    if ifpureinterp
-        dϕdt = (slm_new.ϕ - slm.ϕ) / slices
+
+    if ifimplicit
+        dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
     else
-        if ifimplicit
-            dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
-        else
-            dϕdt, dBdt = get_dϕdt(layout, slm, B, dxdt)
-        end
+        dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt, aditers)
     end
 
     slms = [slm]
     layouts = [layout]
-    for i in 1:slices
-        println("Slices Step $i/$slices")
-        if ifflow    
-            layout_new = ContinuousLayout(points + i*Δx)
-            slm_new, cost, B = match_image(layout_new, slm, B, algorithm)
+    
+    for i in 1:keypoints
+        println("keypoints Step $i/$keypoints")
+ 
+        layout_new = ContinuousLayout(points + i*Δx)
+        slm_new, cost, B = match_image(layout_new, slm, B, algorithm)
 
-            t0 = time()
-            if ifpureinterp
-                dϕdt_new = (slm_new.ϕ - slm.ϕ) / slices
-            else
-                if ifimplicit
-                    dϕdt_new, dBdt_new = get_dϕBdt(layout_new, slm_new, B, dxdt) # by implicit function theorem
-                else
-                    dϕdt_new, dBdt_new = get_dϕdt(layout_new, slm_new, B, dxdt)
-                end
-            end
-            t1 = time()
-            print(@sprintf("    Finish dϕdt time = %.2f s\n", t1-t0))
-
-            _, trap_A_mean = compute_cost(slm, layout)
-            _, trap_A_mean_new = compute_cost(slm_new, layout_new)
-
-            for j in 1:interps
-                layout_interp = ContinuousLayout(layout_new.points - (interps - j) * Δx / interps)
-                if j <= interps/2
-                    slm_interp = SLM(slm.A, slm.ϕ + j * dϕdt * dt/interps, slm.SLM2π)
-                    # dt = optimize_dt(layout_interp, slm, dϕdt)
-                    # @show dt
-                    # slm_interp = SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π)
-                    variance, decay_rate = compute_cost(slm_interp, layout_interp, trap_A_mean)
-                else
-                    slm_interp = SLM(slm_new.A, slm_new.ϕ - (interps - j) * dϕdt_new * dt/interps, slm_new.SLM2π)
-                    # dt = optimize_dt(layout_interp, slm_new, -dϕdt_new)
-                    # @show dt
-                    # slm_interp = SLM(slm_new.A, slm_new.ϕ - dϕdt_new * dt, slm_new.SLM2π)
-                    variance, decay_rate = compute_cost(slm_interp, layout_interp, trap_A_mean_new)
-                end
-
-                print(@sprintf("\tinterpolation Step %d/%d: A variance = %.3e decay rate = %.8f\n", j, interps, variance, decay_rate))
-
-                push!(slms, slm_interp)
-                push!(layouts, layout_interp)
-            end
-
-            slm = slm_new
-            dϕdt = dϕdt_new
-            layout = layout_new
+        t0 = time()
+        if ifimplicit
+            dϕdt_new, dBdt_new = get_dϕBdt(layout_new, slm_new, B, dxdt) # by implicit function theorem
         else
-            layout = ContinuousLayout(points + i*Δx)
-            slm, cost, B = match_image(layout, slm, B, algorithm)
-            push!(slms, slm)
-            push!(layouts, layout)
+            dϕdt_new, dBdt_new = get_dϕBdt(layout_new, slm_new, B, dxdt, aditers)
         end
-        
+        t1 = time()
+        print(@sprintf("    Finish dϕdt time = %.2f s\n", t1-t0))
+
+        _, trap_A_mean = compute_cost(slm, layout)
+        _, trap_A_mean_new = compute_cost(slm_new, layout_new)
+
+        for j in 1:interps
+            layout_interp = ContinuousLayout(layout_new.points - (interps - j) * Δx / interps)
+            if j <= interps/2
+                slm_interp = SLM(slm.A, slm.ϕ + 2 * j * dϕdt * dt/interps, slm.SLM2π)
+                variance, decay_rate = compute_cost(slm_interp, layout_interp, trap_A_mean)
+            else
+                slm_interp = SLM(slm_new.A, slm_new.ϕ - 2 * (interps - j) * dϕdt_new * dt/interps, slm_new.SLM2π)
+                variance, decay_rate = compute_cost(slm_interp, layout_interp, trap_A_mean_new)
+            end
+
+            print(@sprintf("\tinterpolation Step %d/%d: A variance = %.3e decay rate = %.8f\n", j, interps, variance, decay_rate))
+
+            push!(slms, slm_interp)
+            push!(layouts, layout_interp)
+            i == keypoints && j >= interps * end_interps_ratio && break
+        end
+
+        slm = slm_new
+        dϕdt = dϕdt_new
+        layout = layout_new
     end
     
     return layouts, slms

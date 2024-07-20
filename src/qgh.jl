@@ -15,12 +15,10 @@ module qgh
     using Zygote
     
     import Base: intersect, union, setdiff, Array
-    import Plots: plot, plot!, heatmap, heatmap!
     import CUDA: CuArray
     
     export ContinuousLayout, SLM, ϕdiff
-    export match_image, WGS, evolution_slm
-    export plot, plot_slms_ϕ_diff, plot_gif, plot_decay, heatmap, heatmap!, heatmap_slm_diff!
+    export match_image, WGS, evolution_slm_direct, evolution_slm_flow
     
     module Defaults
         const atype = Array 
@@ -36,5 +34,6 @@ module qgh
     include("utils/plot.jl")
     include("ft.jl")
     include("wgs.jl")
-    include("evolution/fixedpoint.jl")
+    include("evolution/gradient_flow.jl")
+    include("evolution/direct_interpolation.jl")
 end

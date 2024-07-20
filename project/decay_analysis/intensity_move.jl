@@ -1,4 +1,5 @@
 using qgh
+using CairoMakie
 using Random
 
 begin # slms_exact data
@@ -14,13 +15,7 @@ begin # slms_exact data
     algorithm = WGS(maxiter=100, verbose=false, show_every=10, tol=1e-10, ratio_fixphase=0.9)
 
     #benchmark
-    layouts_exact, slms_exact = evolution_slm(layout, layout_new, slm, algorithm; 
-                                              slices=5, 
-                                              interps=1, 
-                                              aditers=5,
-                                              ifflow=false,
-                                              ifimplicit=false)
-
+    layouts_exact, slms_exact = evolution_slm_direct(layout, layout_new, slm, algorithm; keypoints=5)
 end
 
 begin # plot exact intensity decay and move
@@ -44,14 +39,12 @@ end
 
 begin # plot flow intensity decay and move
     layout = atype(layout_example(Val(:butterflycontinuous); α = 0.00))
-    layout_new = atype(layout_example(Val(:butterflycontinuous); α = 0.08))
+    layout_new = atype(layout_example(Val(:butterflycontinuous); α = 0.015))
 
-    layouts_flow, slms_flow = evolution_slm(layout, layout_new, slm, algorithm; 
-                                        slices=1, 
-                                        interps=10, 
-                                        aditers=10,
-                                        ifflow=true,
-                                        ifimplicit=false)
+    layouts_flow, slms_flow = evolution_slm_flow(layout, layout_new, slm, algorithm; 
+                                                 interps=10, 
+                                                 aditers=10,
+                                                 ifimplicit=false)
 
     fig = Figure(size = (500, 500))
     ax1 = Axis(fig[1, 1], aspect = DataAspect(), limits = (40, 110, 790, 860))
@@ -71,14 +64,12 @@ end
 
 begin # plot more flow moves
     layout = atype(layout_example(Val(:butterflycontinuous); α = 0.00))
-    layout_new = atype(layout_example(Val(:butterflycontinuous); α = 0.08))
+    layout_new = atype(layout_example(Val(:butterflycontinuous); α = 0.03))
 
-    layouts_flow, slms_flow = evolution_slm(layout, layout_new, slm, algorithm; 
-                                        slices=1, 
-                                        interps=100, 
-                                        aditers=10,
-                                        ifflow=true,
-                                        ifimplicit=false)
+    layouts_flow, slms_flow = evolution_slm_flow(layout, layout_new, slm, algorithm; 
+                                                 interps=100, 
+                                                 aditers=10,
+                                                 ifimplicit=false)
 
     fig = Figure(size = (500, 500))
     ax1 = Axis(fig[1, 1], aspect = DataAspect(), limits = (40, 110, 790, 860))
@@ -91,8 +82,8 @@ begin # plot more flow moves
 
     ax1 = Axis(fig[2, 1], xlabel = "position", ylabel = "intensity")
     ax2 = Axis(fig[2, 2], xlabel = "time", ylabel = "position")
-    qgh.plot_intensity_decay!(ax1, slms_flow[1:50], area, image_resolution; color = :red, label = "exact")
-    qgh.plot_move_distance!(ax2, slms_flow[1:50], area, image_resolution; color = :red, label = "exact")
+    qgh.plot_intensity_decay!(ax1, slms_flow[1:end], area, image_resolution; color = :red, label = "exact")
+    qgh.plot_move_distance!(ax2, slms_flow[1:end], area, image_resolution; color = :red, label = "exact")
     display(fig)
 end
 
