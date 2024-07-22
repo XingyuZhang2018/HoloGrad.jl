@@ -52,6 +52,7 @@ function find_max_intensity(slm::SLM, area, Nu::Int, Nv::Int)
     X, Y = preloc_cft(fourier , Nu, Nv)
     image = cft_m(fourier, X, Y)
 
+    area = [round.(Int, area[1]), round.(Int, area[2])]
     max_intensity, index = findmax(abs.(image[area[1][1]:area[2][1], area[1][2]:area[2][2]]))
     return max_intensity, [area[1][1] + index[1] - 1, area[1][2] + index[2] - 1]
 end

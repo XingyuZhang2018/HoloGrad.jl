@@ -26,3 +26,20 @@ function layout_example(::Val{:butterflycontinuous}; α = 0.0)
 
     ContinuousLayout(points)
 end
+
+# circle continuous layout
+function layout_example(::Val{:circle}; α = 0.0)
+    points_origin = []
+    for x in 0:0.02:1, y in 0:0.02:1
+        if (x-0.5)^2 + (y-0.5)^2 <= 0.25^2
+            push!(points_origin, [x, y])
+        end
+    end
+
+    points = Array{Float64, 2}([[] []])
+    for i in points_origin
+        points = vcat(points, [(1.0 + 0.5 * α) * (i[1] - 0.5) + 0.5 (1 - 0.5 * α) * (i[2] - 0.5) + 0.5])
+    end
+
+    ContinuousLayout(points)
+end

@@ -20,6 +20,8 @@ end
 
 begin # plot exact intensity decay and move
     image_resolution = 1000
+    areas = qgh.find_area(layout, layout_new, image_resolution, 5)
+    area = areas[1]
 
     fig = Figure(size = (500, 500))
     fa = fig[1, 1] = GridLayout()
@@ -32,7 +34,7 @@ begin # plot exact intensity decay and move
     qgh.plot_rectange!(ax2, area)
 
     fb = fig[2, 1] = GridLayout()
-    qgh.plot_distance_intensity_decay!(fb, slms_exact, area, image_resolution; color = :red, label = "exact")
+    qgh.plot_distance_intensity_decay!(fb, slms_exact, areas, image_resolution; color = :red, label = "exact")
     display(fig)
 end
 
@@ -56,7 +58,7 @@ begin # plot flow intensity decay and move
     qgh.plot_rectange!(ax2, area)
 
     fb = fig[2, 1] = GridLayout()
-    qgh.plot_distance_intensity_decay!(fb, slms_flow[1:5], area, image_resolution; color = :red, label = "flow")
+    qgh.plot_distance_intensity_decay!(fb, slms_flow[1:5], areas, image_resolution; color = :red, label = "flow")
     display(fig)
 end
 
@@ -69,6 +71,8 @@ begin # plot more flow moves
                                                  aditers=10,
                                                  ifimplicit=false)
 
+    areas = qgh.find_area(layout, layout_new, image_resolution, length(slms_flow))
+
     fig = Figure(size = (500, 500))
     fa = fig[1, 1] = GridLayout()
     ax1 = Axis(fa[1, 1], aspect = DataAspect(), limits = (40, 110, 790, 860))
@@ -80,7 +84,7 @@ begin # plot more flow moves
     qgh.plot_rectange!(ax2, area)
 
     fb = fig[2, 1] = GridLayout()
-    qgh.plot_distance_intensity_decay!(fb, slms_flow[1:end], area, image_resolution; color = :red, label = "flow")
+    qgh.plot_distance_intensity_decay!(fb, slms_flow[1:end], areas, image_resolution; color = :red, label = "flow")
     display(fig)
 end
 

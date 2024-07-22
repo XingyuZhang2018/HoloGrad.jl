@@ -215,17 +215,17 @@ function plot_adjacent_KL(p, slms, Nu::Int, Nv::Int; kwarg...)
     Plots.scatter!(p, x, y, label=false; kwarg...)
 end
 
-plot_distance_intensity_decay!(f, slms, area, N::Int; kwarg...) = plot_distance_intensity_decay!(f, slms, area, N, N; kwarg...)
-function plot_distance_intensity_decay!(f, slms, area, Nu::Int, Nv::Int; kwarg...)
-    indexes = []
+plot_distance_intensity_decay!(f, slms, areas, N::Int; kwarg...) = plot_distance_intensity_decay!(f, slms, areas, N, N; kwarg...)
+function plot_distance_intensity_decay!(f, slms, areas, Nu::Int, Nv::Int; kwarg...)
+    positions = []
     intensities = Array{Float64}([])
     
-    for slm in slms
-        intensity, index = find_max_intensity(slm, area, Nu, Nv)
-        push!(indexes, index)
+    for i in 1:length(slms)
+        intensity, position = find_max_intensity(slms[i], areas[i], Nu, Nv)
+        push!(positions, position)
         push!(intensities, intensity)
     end
-    distances = [norm(indexes[i] - indexes[1]) for i in 1:length(indexes)]
+    distances = [norm(positions[i] - positions[1]) for i in 1:length(positions)]
 
     ax1 = Axis(f[1, 1], xlabel = "time", ylabel = "distance")
     ax2 = Axis(f[1, 2], xlabel = "intensity", ylabel = "distance", aspect = 0.25)
@@ -244,4 +244,14 @@ end
 function plot_rectange!(ax, area)
     vertices = Point2f[area[1], (area[2][1], area[1][2]), area[2], (area[1][1], area[2][2])]
     poly!(ax, vertices, color = (:red, 0.0), strokewidth = 2, strokecolor = :red)
+end
+
+function find_area(layout, layout_end, image_resolution, keypoints)
+    interval = layout_end.points - layout.points
+    interval_norm = [norm(interval[i, :]) for i in 1:size(interval, 1)]
+    interval_max, index = findmax(interval_norm)
+    select_points = [layout.points[index, :] + interval[index, :] * i / keypoints for i in 0:keypoints]
+    area = [[point .- 0.005, point .+ 0.005] .* image_resolution for point in select_points]
+
+    return area
 end
