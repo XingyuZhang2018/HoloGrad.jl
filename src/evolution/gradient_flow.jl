@@ -96,14 +96,14 @@ function writelog(os::OptimizationState, iters, show_every, verbose)
     return false
 end
 
-function get_flow_params(slm, layout::Layout, layout_end::Layout)
+function get_flow_params(slm, layout::Layout, layout_end::Layout, α, β)
     Nx, Ny = size(slm.A)
     one_piexl = 1 / Nx
     interval = layout_end.points - layout.points
     interval_norm = [norm(interval[i, :]) for i in 1:size(interval, 1)]
     interval_max, index = findmax(interval_norm)
-    ratio = one_piexl / interval_max * 0.5 # 0.5 currently is the experimental value, which decides the distance between two keypoints
-    dxdt = ratio * interval / 2 # 2 currently is the experimental value, which decides the speed of the flow
+    ratio = one_piexl / interval_max * α 
+    dxdt = ratio * interval * β
     Δx = interval * ratio  
     keypoints = ceil(Int, 1/ratio)
     end_interps_ratio = mod(1/ratio, 1)
@@ -123,6 +123,8 @@ Keyword Args:
     interps (Int): the number of interpolation between two ket points.
     aditers (Int): the number of iterations to get the time derivative of the phase in the SLM plane.
     ifimplicit (Bool): if use the implicit function theorem to get the time derivative of the phase in the SLM plane.
+    α (Float): the ratio decides the distance between two keypoints.
+    β (Float): the speed of the flow.
 
 Returns:
     layouts (Array{Layout}): the layouts of traps.
@@ -131,10 +133,12 @@ Returns:
 function evolution_slm_flow(layout::ContinuousLayout, layout_end::Layout, slm::SLM, algorithm;
                             interps=5, 
                             aditers=10,
-                            ifimplicit=false
+                            ifimplicit=false,
+                            α=0.5,
+                            β=1.0
                             )
     
-    dxdt, keypoints, Δx, end_interps_ratio = get_flow_params(slm, layout, layout_end)
+    dxdt, keypoints, Δx, end_interps_ratio = get_flow_params(slm, layout, layout_end, α, β)
     points = layout.points
     dt = 1
 
@@ -171,10 +175,10 @@ function evolution_slm_flow(layout::ContinuousLayout, layout_end::Layout, slm::S
         for j in 1:interps
             layout_interp = ContinuousLayout(layout_new.points - (interps - j) * Δx / interps)
             if j <= interps/2
-                slm_interp = SLM(slm.A, slm.ϕ + 2 * j * dϕdt * dt/interps, slm.SLM2π)
+                slm_interp = SLM(slm.A, slm.ϕ + j * dϕdt * dt/interps, slm.SLM2π)
                 variance, decay_rate = compute_cost(slm_interp, layout_interp, trap_A_mean)
             else
-                slm_interp = SLM(slm_new.A, slm_new.ϕ - 2 * (interps - j) * dϕdt_new * dt/interps, slm_new.SLM2π)
+                slm_interp = SLM(slm_new.A, slm_new.ϕ - (interps - j) * dϕdt_new * dt/interps, slm_new.SLM2π)
                 variance, decay_rate = compute_cost(slm_interp, layout_interp, trap_A_mean_new)
             end
 

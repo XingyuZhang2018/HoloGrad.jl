@@ -44,7 +44,8 @@ begin # plot flow half body image
     layouts_flow, slms_flow = evolution_slm_flow(layout, layout_new, slm, algorithm; 
                                                  interps=10, 
                                                  aditers=10,
-                                                 ifimplicit=false)
+                                                 ifimplicit=false,
+                                                 α = 1)
     fig = Figure(size = (1000, 200))
     for i in 1:5
         axi = Axis(fig[1, i], aspect = DataAspect(), limits = (70, 100, 810, 840))

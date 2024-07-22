@@ -22,18 +22,17 @@ begin # plot exact intensity decay and move
     image_resolution = 1000
 
     fig = Figure(size = (500, 500))
-    ax1 = Axis(fig[1, 1], aspect = DataAspect(), limits = (40, 110, 790, 860))
+    fa = fig[1, 1] = GridLayout()
+    ax1 = Axis(fa[1, 1], aspect = DataAspect(), limits = (40, 110, 790, 860))
     qgh.heatmap!(ax1, slms_exact[1], image_resolution)
-    ax2 = Axis(fig[1, 2], aspect = DataAspect(), limits = (40, 110, 790, 860))
+    ax2 = Axis(fa[1, 2], aspect = DataAspect(), limits = (40, 110, 790, 860))
     qgh.heatmap!(ax2, slms_exact[end], image_resolution)
     area = [(50, 800), (100, 850)]
     qgh.plot_rectange!(ax1, area)
     qgh.plot_rectange!(ax2, area)
 
-    ax1 = Axis(fig[2, 1], xlabel = "position", ylabel = "intensity")
-    ax2 = Axis(fig[2, 2], xlabel = "time", ylabel = "position")
-    qgh.plot_intensity_decay!(ax1, slms_exact, area, image_resolution; color = :red, label = "exact")
-    qgh.plot_move_distance!(ax2, slms_exact, area, image_resolution; color = :red, label = "exact")
+    fb = fig[2, 1] = GridLayout()
+    qgh.plot_distance_intensity_decay!(fb, slms_exact, area, image_resolution; color = :red, label = "exact")
     display(fig)
 end
 
@@ -47,18 +46,17 @@ begin # plot flow intensity decay and move
                                                  ifimplicit=false)
 
     fig = Figure(size = (500, 500))
-    ax1 = Axis(fig[1, 1], aspect = DataAspect(), limits = (40, 110, 790, 860))
+    fa = fig[1, 1] = GridLayout()
+    ax1 = Axis(fa[1, 1], aspect = DataAspect(), limits = (40, 110, 790, 860))
     qgh.heatmap!(ax1, slms_flow[1], image_resolution)
-    ax2 = Axis(fig[1, 2], aspect = DataAspect(), limits = (40, 110, 790, 860))
+    ax2 = Axis(fa[1, 2], aspect = DataAspect(), limits = (40, 110, 790, 860))
     qgh.heatmap!(ax2, slms_flow[4], image_resolution)
     area = [(50, 800), (100, 850)]
     qgh.plot_rectange!(ax1, area)
     qgh.plot_rectange!(ax2, area)
 
-    ax1 = Axis(fig[2, 1], xlabel = "position", ylabel = "intensity")
-    ax2 = Axis(fig[2, 2], xlabel = "time", ylabel = "position")
-    p1 = qgh.plot_intensity_decay!(ax1, slms_flow[1:5], area, image_resolution; color = :red, label = "exact")
-    qgh.plot_move_distance!(ax2, slms_flow[1:5], area, image_resolution; color = :red, label = "exact")
+    fb = fig[2, 1] = GridLayout()
+    qgh.plot_distance_intensity_decay!(fb, slms_flow[1:5], area, image_resolution; color = :red, label = "flow")
     display(fig)
 end
 
@@ -72,18 +70,17 @@ begin # plot more flow moves
                                                  ifimplicit=false)
 
     fig = Figure(size = (500, 500))
-    ax1 = Axis(fig[1, 1], aspect = DataAspect(), limits = (40, 110, 790, 860))
+    fa = fig[1, 1] = GridLayout()
+    ax1 = Axis(fa[1, 1], aspect = DataAspect(), limits = (40, 110, 790, 860))
     qgh.heatmap!(ax1, slms_flow[1], image_resolution)
-    ax2 = Axis(fig[1, 2], aspect = DataAspect(), limits = (40, 110, 790, 860))
+    ax2 = Axis(fa[1, 2], aspect = DataAspect(), limits = (40, 110, 790, 860))
     qgh.heatmap!(ax2, slms_flow[40], image_resolution)
     area = [(50, 800), (100, 850)]
     qgh.plot_rectange!(ax1, area)
     qgh.plot_rectange!(ax2, area)
 
-    ax1 = Axis(fig[2, 1], xlabel = "position", ylabel = "intensity")
-    ax2 = Axis(fig[2, 2], xlabel = "time", ylabel = "position")
-    qgh.plot_intensity_decay!(ax1, slms_flow[1:end], area, image_resolution; color = :red, label = "exact")
-    qgh.plot_move_distance!(ax2, slms_flow[1:end], area, image_resolution; color = :red, label = "exact")
+    fb = fig[2, 1] = GridLayout()
+    qgh.plot_distance_intensity_decay!(fb, slms_flow[1:end], area, image_resolution; color = :red, label = "flow")
     display(fig)
 end
 

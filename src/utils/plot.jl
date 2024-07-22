@@ -104,18 +104,20 @@ function plot_gif(slms)
     gif(anim, fps=length(slms)÷3)
 end
 
-plot_gif(slms, N) = plot_gif(slms, N, N)
-function plot_gif(slms, Nu, Nv)
-    p = Plots.plot(layout=(1, 2))
+image_animation(slms, N; file, kwarg...) = image_animation(slms, N, N; file, kwarg...)
+function image_animation(slms, Nu, Nv; file, kwarg...)
+    fig = Figure()
+    ax = Axis(fig[1, 1], aspect = DataAspect())
     X, Y = preloc_cft(slms[1].ϕ, Nu, Nv)
-    anim = @animate for i in 1:length(slms)
-        fourier = slms[i].A .* exp.(slms[i].ϕ * (2im * π / slms[i].SLM2π))
-        image = cft_m(fourier, X, Y)
-        Plots.heatmap!(p[1], Array(slms[i].ϕ), colorbar=true, clim=(0, slms[i].SLM2π), aspect_ratio=:equal, ticks=false, yticks=false, frame=:none)
-        Plots.heatmap!(p[2], Array(abs.(image)), colorbar=true, aspect_ratio=:equal, ticks=false, yticks=false, frame=:none)
-    end
+    iter = Observable(1)
+    fourier = @lift(slms[$iter].A .* exp.(slms[$iter].ϕ * (2im * π / slms[$iter].SLM2π)))
+    image = @lift(Array(abs.(cft_m($fourier, X, Y))))
+    CairoMakie.heatmap!(ax, 1:Nu, 1:Nv, image; kwarg...)
+    hidedecorations!(ax)
 
-    gif(anim, fps=length(slms)÷3)
+    CairoMakie.record(fig, "$file", 1:length(slms); framerate=length(slms)÷3) do i
+        iter[] = i
+    end
 end
 
 plot_decay(slms_exact, slms_flow, N::Int; kwarg...) = plot_decay(slms_exact, slms_flow, N, N; kwarg...)
@@ -213,30 +215,30 @@ function plot_adjacent_KL(p, slms, Nu::Int, Nv::Int; kwarg...)
     Plots.scatter!(p, x, y, label=false; kwarg...)
 end
 
-plot_intensity_decay!(ax, slms, area, N::Int; kwarg...) = plot_intensity_decay!(ax, slms, area, N, N; kwarg...)
-function plot_intensity_decay!(ax, slms, area, Nu::Int, Nv::Int; kwarg...)
-    x = []
-    intensities = []
+plot_distance_intensity_decay!(f, slms, area, N::Int; kwarg...) = plot_distance_intensity_decay!(f, slms, area, N, N; kwarg...)
+function plot_distance_intensity_decay!(f, slms, area, Nu::Int, Nv::Int; kwarg...)
+    indexes = []
+    intensities = Array{Float64}([])
     
     for slm in slms
         intensity, index = find_max_intensity(slm, area, Nu, Nv)
-        push!(x, index[1])
+        push!(indexes, index)
         push!(intensities, intensity)
     end
-    lines!(ax, x, intensities; kwarg...)
-    CairoMakie.scatter!(ax, x, intensities; kwarg...)
-end
+    distances = [norm(indexes[i] - indexes[1]) for i in 1:length(indexes)]
 
-plot_move_distance!(ax, slms, area, N::Int; kwarg...) = plot_move_distance!(ax, slms, area, N, N; kwarg...)
-function plot_move_distance!(ax, slms, area, Nu::Int, Nv::Int; kwarg...)
-    distances = []
-    for slm in slms
-        intensity, index = find_max_intensity(slm, area, Nu, Nv)
-        push!(distances, index[1])
-    end
-    x = LinRange(0, 1, length(slms))
-    lines!(ax, x, distances; kwarg...)
-    CairoMakie.scatter!(ax, x, distances; markersize = 5, kwarg...)
+    ax1 = Axis(f[1, 1], xlabel = "time", ylabel = "distance")
+    ax2 = Axis(f[1, 2], xlabel = "intensity", ylabel = "distance", aspect = 0.25)
+    linkyaxes!(ax1, ax2)
+
+    t = LinRange(0, 1, length(slms))
+    CairoMakie.lines!(ax1, t, distances; kwarg...)
+    CairoMakie.scatter!(ax1, t, distances; kwarg...)
+
+    CairoMakie.lines!(ax2, intensities, distances; kwarg...)
+    CairoMakie.poly!(ax2, [intensities; fill(0, length(intensities))], [distances; reverse(distances)], color = (:blue, 0.3))
+    CairoMakie.xlims!(ax2, low = 0)
+    CairoMakie.hideydecorations!(ax2, grid = false)
 end
 
 function plot_rectange!(ax, area)
