@@ -58,8 +58,7 @@ function heatmap!(ax, slm::SLM, Nu::Int, Nv::Int; kwarg...)
     X, Y = preloc_cft(fourier , Nu, Nv)
     image = cft_m(fourier, X, Y)
 
-    CairoMakie.heatmap!(ax, 1:size(image, 1), 1:size(image, 2), Array(abs.(image)); kwarg...)
-    hidedecorations!(ax)
+    CairoMakie.heatmap!(ax, 1:size(image, 1), 1:size(image, 2), Array(normalize(abs.(image))); kwarg...)
 end
 
 heatmap_slm_diff!(p, slm1::SLM, slm2::SLM, N::Int; kwarg...) = heatmap_slm_diff!(p, slm1, slm2, N, N; kwarg...)

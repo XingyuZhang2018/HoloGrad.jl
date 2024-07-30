@@ -9,22 +9,22 @@ function fixed_point_map(layout::Layout, slm::SLM, B)
     v_forced_trap = B .* exp.(1im * trap_ϕ)
     t = icft(v_forced_trap, iX, iY)
     ϕ = ((angle.(t) ) .* (0.5 / π) * slm.SLM2π)
-    return [mod.(ϕ, slm.SLM2π), B]
+    return [mod.(ϕ .+ slm.SLM2π/2, slm.SLM2π) .- slm.SLM2π/2, B]
 end
 
 """
 Get the time derivative of the phase in the SLM plane by the implicit function theorem.
 """
-function get_dϕBdt(layout::Layout, slm::SLM, B, dxdt; atol=1e-12, maxiter=1)
+function get_dϕBdt(layout::Layout, slm::SLM, B, dxdt; atol=1e-12, maxiter=1, ϵ=1e-12)
     b = ForwardDiff.derivative(dt -> fixed_point_map(ContinuousLayout(layout.points + dxdt*dt), slm, B), 0.0)
-    dϕBdt, info = linsolve(dϕBdt -> ((I(size(dϕBdt,1)) .* (1 + 1e-10)) * dϕBdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕBdt[1] * dt, slm.SLM2π), B + dϕBdt[2] * dt), 0.0)), b; atol, maxiter)
+    dϕBdt, info = linsolve(dϕBdt -> ((I(size(dϕBdt,1)) .* (1 + ϵ)) * dϕBdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕBdt[1] * dt, slm.SLM2π), B + dϕBdt[2] * dt), 0.0)), b; atol, maxiter)
     info.converged == 0 && @warn "dϕBdt not converged."
     return dϕBdt
 end
 
-function get_dϕdt(layout::Layout, slm::SLM, B, dxdt)
+function get_dϕdt(layout::Layout, slm::SLM, B, dxdt; ϵ=1e-15)
     b = ForwardDiff.derivative(dt -> fixed_point_map(ContinuousLayout(layout.points + dxdt*dt), slm, B), 0.0)
-    dϕdt, info = linsolve(dϕdt -> ((I(size(dϕdt,1)) .* (1 + 1e-10)) * dϕdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π), B), 0.0)), b)
+    dϕdt, info = linsolve(dϕdt -> ((I(size(dϕdt,1)) .* (1 + ϵ)) * dϕdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π), B), 0.0)), b)
     info.converged == 0 && @warn "dϕdt not converged."
     return dϕdt
 end
@@ -194,5 +194,64 @@ function evolution_slm_flow(layout::ContinuousLayout, layout_end::Layout, slm::S
         layout = layout_new
     end
     
+    return layouts, slms
+end
+
+"""
+evolution slm by matching the image of layout and slm using flow only.
+
+Args:
+    layout (Layout): the layout of traps.
+    layout_end (Layout): the layout of traps at the end.
+    slm (SLM): the initial SLM.
+    algorithm (Algorithm): the algorithm to match the image.
+    
+Keyword Args:
+    interps (Int): the number of interpolation between two ket points.
+    aditers (Int): the number of iterations to get the time derivative of the phase in the SLM plane.
+    ifimplicit (Bool): if use the implicit function theorem to get the time derivative of the phase in the SLM plane.
+
+Returns:
+    layouts (Array{Layout}): the layouts of traps.
+    slms (Array{SLM}): the SLMs.
+"""
+function evolution_slm_pure_flow(layout::ContinuousLayout, layout_end::Layout, slm::SLM, algorithm;
+                                 interps=5, 
+                                 aditers=10,
+                                 ifimplicit=false,
+                                 )
+
+    Δx = layout_end.points - layout.points
+    dxdt = Δx
+    dt = 1
+
+    t0 = time()
+    slm, cost, B = match_image(layout, slm, algorithm)
+    t1 = time()
+    print(@sprintf("Finish wgs time = %.2f s\n", t1-t0))
+
+    t0 = time()
+    if ifimplicit
+        dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
+    else
+        dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt, aditers)
+    end
+    t1 = time()
+    print(@sprintf("Finish dϕdt time = %.2f s\n", t1-t0))
+    slms = [slm]
+    layouts = [layout]
+    
+    _, trap_A_mean = compute_cost(slm, layout)
+    for j in 1:interps
+        layout_interp = ContinuousLayout(layout.points + j * Δx / interps)
+        slm_interp = SLM(slm.A, slm.ϕ + j * dϕdt * dt/interps, slm.SLM2π)
+        variance, decay_rate = compute_cost(slm_interp, layout_interp, trap_A_mean)
+
+        print(@sprintf("\tinterpolation Step %d/%d: A variance = %.3e decay rate = %.8f\n", j, interps, variance, decay_rate))
+
+        push!(slms, slm_interp)
+        push!(layouts, layout_interp)
+    end
+
     return layouts, slms
 end
