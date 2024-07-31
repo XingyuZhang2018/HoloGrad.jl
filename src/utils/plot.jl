@@ -56,9 +56,10 @@ heatmap!(ax, slm::SLM, N::Int; kwarg...) = heatmap!(ax, slm::SLM, N, N; kwarg...
 function heatmap!(ax, slm::SLM, Nu::Int, Nv::Int; kwarg...)
     fourier = slm.A .* exp.(slm.ϕ * (2im * π / slm.SLM2π))
     X, Y = preloc_cft(fourier , Nu, Nv)
-    image = cft_m(fourier, X, Y)
+    image = abs.(cft_m(fourier, X, Y))
+    image /= maximum(image)
 
-    CairoMakie.heatmap!(ax, 1:size(image, 1), 1:size(image, 2), Array(normalize(abs.(image))); kwarg...)
+    CairoMakie.heatmap!(ax, 1:size(image, 1), 1:size(image, 2), Array(image); kwarg...)
 end
 
 heatmap_slm_diff!(p, slm1::SLM, slm2::SLM, N::Int; kwarg...) = heatmap_slm_diff!(p, slm1, slm2, N, N; kwarg...)
@@ -80,7 +81,7 @@ function plot_slms_ϕ_diff!(ax, slms; kwarg...)
     for i in 1:length(slms)-1
         d = ϕdiff(slms[i+1], slms[i])
         @show compute_cost(d), mean(abs.(d))
-        CairoMakie.barplot!(ax, 1:length(d), Array(d[:]), strokewidth = 0.01; kwarg...)
+        CairoMakie.barplot!(ax, 1:length(d), Array(d[:]), strokewidth = 0.00001; kwarg...)
         CairoMakie.hlines!(ax, Array([mean(abs.(d))]); kwarg...)
     end
 end
@@ -242,15 +243,15 @@ end
 
 function plot_rectange!(ax, area)
     vertices = Point2f[area[1], (area[2][1], area[1][2]), area[2], (area[1][1], area[2][2])]
-    poly!(ax, vertices, color = (:red, 0.0), strokewidth = 2, strokecolor = :red)
+    poly!(ax, vertices, color = (:red, 0.0), strokewidth = 1, strokecolor = :red)
 end
 
-function find_area(layout, layout_end, image_resolution, keypoints)
+function find_area(layout, layout_end, image_resolution, keypoints; area_size = 0.01)
     interval = layout_end.points - layout.points
     interval_norm = [norm(interval[i, :]) for i in 1:size(interval, 1)]
     interval_max, index = findmax(interval_norm)
     select_points = [layout.points[index, :] + interval[index, :] * i / keypoints for i in 0:keypoints]
-    area = [[point .- 0.005, point .+ 0.005] .* image_resolution for point in select_points]
+    area = [[point .- area_size/2, point .+ area_size/2] .* image_resolution for point in select_points]
 
     return area
 end

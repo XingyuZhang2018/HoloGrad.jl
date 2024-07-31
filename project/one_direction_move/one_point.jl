@@ -5,7 +5,7 @@ using Random
 begin # slms_exact data
     Random.seed!(42)
 
-    atype = Array # or Array
+    atype = Array # or CuArray
     N = 10
 
     layout = atype(ContinuousLayout([0.5 0.5]))
@@ -50,24 +50,24 @@ begin # plot flow implicit
                                                           aditers=5,
                                                           ifimplicit=true)
 
-    fig = Figure(size = (1400, 400))
+    fig = Figure(size = (580, 150))
 
-    ax11 = Axis(fig[1, 1], aspect = DataAspect(), title = L"\Delta \phi_{exact}")
+    ax11 = Axis(fig[1, 1], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{exact}}")
     Δϕ_exact = qgh.ϕdiff(slms_exact[end], slms_exact[1])
     hm = CairoMakie.heatmap!(ax11, 1:N, 1:N, Δϕ_exact, colorrange = (-pi, pi))
     hidedecorations!(ax11)
     Colorbar(fig[1, 1][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]))
 
-    ax12 = Axis(fig[1, 2], aspect = DataAspect(), title = L"\Delta \phi_{flow}")
+    ax12 = Axis(fig[1, 2], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{flow}}")
     Δϕ_flow = qgh.ϕdiff(slms_flow_implicit[end], slms_flow_implicit[1]) 
     hm = CairoMakie.heatmap!(ax12, 1:N, 1:N, Δϕ_flow, colorrange = (-pi, pi))
     hidedecorations!(ax12)
     Colorbar(fig[1, 2][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]))
 
-    ax13 = Axis(fig[1, 3], aspect = DataAspect(), title = L"\Delta \phi_{exact} - \Delta \phi_{flow}")
+    ax13 = Axis(fig[1, 3], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{exact}} - \Delta \phi_{\mathrm{flow}}")
     hm = CairoMakie.heatmap!(ax13, 1:N, 1:N, Δϕ_exact - Δϕ_flow, colorrange = (-2e-6, 2e-6))
     hidedecorations!(ax13)
-    Colorbar(fig[1, 3][1, 2], hm, tickformat =  "{:.2e}")
+    Colorbar(fig[1, 3][1, 2], hm, tickformat =  "{:.0e}")
 
     save("project/one_direction_move/one_point_Delta_phi_implicit.pdf", fig)
 end
@@ -80,19 +80,19 @@ begin # plot flow without implicit
 
     fig = Figure(size = (1400, 400))
 
-    ax11 = Axis(fig[1, 1], aspect = DataAspect(), title = L"\Delta \phi_{exact}")
+    ax11 = Axis(fig[1, 1], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{exact}}")
     Δϕ_exact = qgh.ϕdiff(slms_exact[end], slms_exact[1])
     hm = CairoMakie.heatmap!(ax11, 1:N, 1:N, Δϕ_exact, colorrange = (-pi, pi))
     hidedecorations!(ax11)
     Colorbar(fig[1, 1][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]))
 
-    ax12 = Axis(fig[1, 2], aspect = DataAspect(), title = L"\Delta \phi_{flow}")
+    ax12 = Axis(fig[1, 2], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{flow}}")
     Δϕ_flow = qgh.ϕdiff(slms_flow[end], slms_flow[1]) 
     hm = CairoMakie.heatmap!(ax12, 1:N, 1:N, Δϕ_flow, colorrange = (-pi, pi))
     hidedecorations!(ax12)
     Colorbar(fig[1, 2][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]))
 
-    ax13 = Axis(fig[1, 3], aspect = DataAspect(), title = L"\Delta \phi_{exact} - \Delta \phi_{flow}")
+    ax13 = Axis(fig[1, 3], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{exact}} - \Delta \phi_{\mathrm{flow}}")
     hm = CairoMakie.heatmap!(ax13, 1:N, 1:N, Δϕ_exact - Δϕ_flow, colorrange = (-2e-6, 2e-6))
     hidedecorations!(ax13)
     Colorbar(fig[1, 3][1, 2], hm, tickformat =  "{:.2e}")

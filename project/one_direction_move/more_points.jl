@@ -25,18 +25,18 @@ end
 begin # plot exact ϕ and B
     image_resolution = N
 
-    fig = Figure(size = (900, 400))
+    fig = Figure(size = (480, 200))
 
     ax12 = Axis(fig[1, 1], aspect = DataAspect(), title = L"B_0")
     hm = qgh.heatmap!(ax12, slms_exact[1], image_resolution)
-    Colorbar(fig[1, 1][1, 2], hm, ticklabelsize = 12)
+    Colorbar(fig[1, 1][1, 2], hm)
 
     ax22 = Axis(fig[1, 2], aspect = DataAspect(), title = L"B_1")
     hm = qgh.heatmap!(ax22, slms_exact[end], image_resolution)
-    Colorbar(fig[1, 2][1, 2], hm, ticklabelsize = 12)
+    Colorbar(fig[1, 2][1, 2], hm)
 
     # display(fig)
-    save("project/one_direction_move/more_points_phi_B.pdf", fig)
+    save("project/one_direction_move/more_points_B.pdf", fig)
 end
 
 begin # plot flow implicit
@@ -45,15 +45,15 @@ begin # plot flow implicit
                                                           aditers=5,
                                                           ifimplicit=true)
 
-    fig = Figure(size = (900, 400))
+    fig = Figure(size = (500, 200))
 
-    ax11 = Axis(fig[1, 1], aspect = DataAspect(), title = L"\Delta \phi_{WGS}")
+    ax11 = Axis(fig[1, 1], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{WGS}}")
     Δϕ_exact = qgh.ϕdiff(slms_exact[end], slms_exact[1])
     hm = CairoMakie.heatmap!(ax11, 1:N, 1:N, Δϕ_exact, colorrange = (-pi, pi))
     hidedecorations!(ax11)
     Colorbar(fig[1, 1][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]))
 
-    ax12 = Axis(fig[1, 2], aspect = DataAspect(), title = L"\Delta \phi_{flow}")
+    ax12 = Axis(fig[1, 2], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{flow}}")
     Δϕ_flow = qgh.ϕdiff(slms_flow_implicit[end], slms_flow_implicit[1]) 
     hm = CairoMakie.heatmap!(ax12, 1:N, 1:N, Δϕ_flow, colorrange = (-pi, pi))
     hidedecorations!(ax12)
@@ -73,30 +73,30 @@ begin # plot flow without implicit
                                                           aditers=10,
                                                           ifimplicit=false)
 
-    fig = Figure(size = (600, 400))
+    fig = Figure(size = (520, 400))
     # ax = Axis(fig[1, 1], aspect = DataAspect())
     # qgh.heatmap!(ax, slms_flow[end], image_resolution)
     # fig
 
-    ax11 = Axis(fig[1, 1], aspect = DataAspect(), title = L"\Delta \phi_{implicit}")
+    ax11 = Axis(fig[1, 1], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{implicit}}")
     Δϕ_flow_implicit = qgh.ϕdiff(slms_flow_implicit[end], slms_flow_implicit[1]) 
     hm = CairoMakie.heatmap!(ax11, 1:N, 1:N, Δϕ_flow_implicit, colorrange = (-pi, pi))
     hidedecorations!(ax11)
     Colorbar(fig[1, 1][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]))
 
-    ax12 = Axis(fig[1, 2], aspect = DataAspect(), title = L"\Delta \phi_{expand-1}")
-    Δϕ_flow_1 = qgh.ϕdiff(slms_flow[end], slms_flow[1]) 
+    ax12 = Axis(fig[1, 2], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{expand-1}}")
+    Δϕ_flow_1 = qgh.ϕdiff(slms_flow_1[end], slms_flow_1[1]) 
     hm = CairoMakie.heatmap!(ax12, 1:N, 1:N, Δϕ_flow_1, colorrange = (-pi, pi))
     hidedecorations!(ax12)
     Colorbar(fig[1, 2][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]))
 
-    ax21 = Axis(fig[2, 1], aspect = DataAspect(), title = L"\Delta \phi_{expand-10}")
+    ax21 = Axis(fig[2, 1], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{expand-10}}")
     Δϕ_flow_10 = qgh.ϕdiff(slms_flow_10[end], slms_flow_10[1]) 
     hm = CairoMakie.heatmap!(ax21, 1:N, 1:N, Δϕ_flow_10, colorrange = (-pi, pi))
     hidedecorations!(ax21)
     Colorbar(fig[2, 1][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]))
 
-    ax22 = Axis(fig[2, 2], aspect = DataAspect(), title = L"\Delta \phi_{implicit} - \Delta \phi_{expand-10}")
+    ax22 = Axis(fig[2, 2], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{implicit}} - \Delta \phi_{\mathrm{expand-10}}")
     hm = CairoMakie.heatmap!(ax22, 1:N, 1:N, Δϕ_flow_implicit - Δϕ_flow_10)
     hidedecorations!(ax22)
     Colorbar(fig[2, 2][1, 2], hm, tickformat =  "{:.2f}")

@@ -15,7 +15,7 @@ end
 """
 Get the time derivative of the phase in the SLM plane by the implicit function theorem.
 """
-function get_dϕBdt(layout::Layout, slm::SLM, B, dxdt; atol=1e-12, maxiter=1, ϵ=1e-12)
+function get_dϕBdt(layout::Layout, slm::SLM, B, dxdt; atol=1e-12, maxiter=1, ϵ=1e-15)
     b = ForwardDiff.derivative(dt -> fixed_point_map(ContinuousLayout(layout.points + dxdt*dt), slm, B), 0.0)
     dϕBdt, info = linsolve(dϕBdt -> ((I(size(dϕBdt,1)) .* (1 + ϵ)) * dϕBdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕBdt[1] * dt, slm.SLM2π), B + dϕBdt[2] * dt), 0.0)), b; atol, maxiter)
     info.converged == 0 && @warn "dϕBdt not converged."
