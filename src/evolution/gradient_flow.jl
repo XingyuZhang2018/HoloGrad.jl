@@ -47,6 +47,20 @@ function get_dϕBdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5)
     return dϕdt, ForwardDiff.value.(dBdt)
 end
 
+function get_dϕdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5)
+    function f(dt)
+        layout = ContinuousLayout(layout.points + dxdt*dt)
+        for _ in 1:iters
+            ϕ, B = fixed_point_map(layout, slm, B)
+            slm = SLM(slm.A, ϕ, slm.SLM2π)
+        end
+        return slm.ϕ
+    end
+    
+    dϕdt = ForwardDiff.derivative(dt -> f(dt), 0.0)
+    return dϕdt
+end
+
 function optimize_dt(layout::Layout, slm::SLM, dϕdt, dxdt; 
                      f_tol=1e-6, 
                      iters=100, 
@@ -148,7 +162,7 @@ function evolution_slm_flow(layout::ContinuousLayout, layout_end::Layout, slm::S
     if ifimplicit
         dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
     else
-        dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt, aditers)
+        dϕdt = get_dϕdt(layout, slm, B, dxdt, aditers)
     end
 
     slms = [slm]
@@ -234,7 +248,7 @@ function evolution_slm_pure_flow(layout::ContinuousLayout, layout_end::Layout, s
     if ifimplicit
         dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
     else
-        dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt, aditers)
+        dϕdt = get_dϕdt(layout, slm, B, dxdt, aditers)
     end
     t1 = time()
     print(@sprintf("Finish dϕdt time = %.2f s\n", t1-t0))
