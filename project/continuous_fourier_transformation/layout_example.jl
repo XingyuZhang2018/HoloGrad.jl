@@ -10,7 +10,7 @@ begin # 1600 Random points
     N = 100
     image_resolution = 1000
 
-    layout = atype(ContinuousLayout(rand(400, 2)))
+    layout = atype(ContinuousLayout(rand(1600, 2)))
     slm = atype(SLM(N))
 
     algorithm = WGS(maxiter=100, verbose=false, show_every=10, tol=1e-10, ratio_fixphase=0.9)
@@ -26,7 +26,7 @@ begin # 40x40 half filled
     image_resolution = 1000
 
     points = Array{Float64, 2}([[] []])
-    for x = LinRange(0,1,20), y = LinRange(0,1,20)
+    for x = LinRange(0,1,40), y = LinRange(0,1,40)
         if rand() < 0.5
             points = vcat(points, [x y])
         end
