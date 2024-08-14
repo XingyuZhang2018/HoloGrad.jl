@@ -43,3 +43,28 @@ function layout_example(::Val{:circle}; α = 0.0)
 
     ContinuousLayout(points)
 end
+
+# Logical quantum processor
+# ref: https://www.nature.com/articles/s41586-023-06927-3
+function layout_example(::Val{:logical_array}; α = 0.0, β = 0.0)
+    points_origin = []
+    for i in 1:20, j in 1:4
+        if !(j in [1, 3] && i % 4 == 3)
+            push!(points_origin, [0.1 + 0.04 * i,  0.2 * j])
+        end
+    end
+
+    points = Array{Float64, 2}([[] []])
+    for i in points_origin
+        if 0.44 < i[1] < 0.62 && i[2] < 0.3
+            points = vcat(points, [i[1] - 0.16 * α i[2] + 0.1 * β])
+        elseif 0.44 < i[1] < 0.62 && 0.3 < i[2] < 0.5
+            points = vcat(points, [i[1] - 0.16 * α i[2] - 0.1 * β])
+        else
+            points = vcat(points, [i[1] i[2]])
+        end
+        
+    end
+
+    ContinuousLayout(points)
+end

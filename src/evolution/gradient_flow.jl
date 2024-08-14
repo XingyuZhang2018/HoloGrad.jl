@@ -112,7 +112,7 @@ end
 
 function get_flow_params(slm, layout::Layout, layout_end::Layout, α, β)
     Nx, Ny = size(slm.A)
-    one_piexl = 1 / Nx
+    one_piexl = 1 / sqrt(Nx*Ny)
     interval = layout_end.points - layout.points
     interval_norm = [norm(interval[i, :]) for i in 1:size(interval, 1)]
     interval_max, index = findmax(interval_norm)

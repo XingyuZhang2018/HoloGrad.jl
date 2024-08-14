@@ -251,7 +251,7 @@ function find_area(layout, layout_end, image_resolution, keypoints; area_size = 
     interval_norm = [norm(interval[i, :]) for i in 1:size(interval, 1)]
     interval_max, index = findmax(interval_norm)
     select_points = [layout.points[index, :] + interval[index, :] * i / keypoints for i in 0:keypoints]
-    area = [[point .- area_size/2, point .+ area_size/2] .* image_resolution for point in select_points]
+    area = [[(point .- area_size/2) .* image_resolution, (point .+ area_size/2) .* image_resolution] for point in select_points]
 
     return area
 end
