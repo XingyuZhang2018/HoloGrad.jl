@@ -241,9 +241,9 @@ function plot_distance_intensity_decay!(f, slms, areas, Nu::Int, Nv::Int; kwarg.
     CairoMakie.hideydecorations!(ax2, grid = false)
 end
 
-function plot_rectange!(ax, area)
+function plot_rectange!(ax, area; kwarg...)
     vertices = Point2f[area[1], (area[2][1], area[1][2]), area[2], (area[1][1], area[2][2])]
-    poly!(ax, vertices, color = (:red, 0.0), strokewidth = 1, strokecolor = :red)
+    poly!(ax, vertices, color = (:red, 0.0), strokewidth = 1, strokecolor = :red; kwarg...)
 end
 
 function find_area(layout, layout_end, image_resolution, keypoints; area_size = 0.01)
