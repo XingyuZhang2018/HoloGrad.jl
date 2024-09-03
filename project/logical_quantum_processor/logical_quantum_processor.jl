@@ -45,6 +45,10 @@ begin # plot exact ϕ and B
     Colorbar(fig[3, 1][1, 2], hm)
     qgh.plot_rectange!(ax, [[290, 25], [440, 100]] .* 0.5)
 
+    for (i,l) in zip(1:3, ["(a)", "(b)", "(c)"])
+        Label(fig[i, 1, Left()], l)
+    end
+
     display(fig)
     save("project/logical_quantum_processor/logical_quantum_processor_B.pdf", fig)
 end
