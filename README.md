@@ -12,7 +12,7 @@ This is a Julia project for quantum graph homology.
 ```
 move to the file and run `julia REPL`, press `]` into `Pkg REPL`
 ```julia
-(@v1.10) pkg> activate .
+(@v1.11) pkg> activate .
 Activating project at `~/../qgh`
 ```
 
@@ -20,8 +20,10 @@ Activating project at `~/../qgh`
 (qgh) pkg> instantiate
 ```
 
-## Usage
-
-please see the examples in the `example` folder.
-
+## Review
+There are four main parts in this project:
+- `src/`: the source code of the project
+- `example/`: the example of the butterfly graph
+- `project/`: the plots of all the results in paper [Dynamic Hologram Generation with Automatic Differentiation](https://arxiv.org/abs/...)
+- `benchmark/`: the benchmark of the project with CPU and GPU acceleration
 

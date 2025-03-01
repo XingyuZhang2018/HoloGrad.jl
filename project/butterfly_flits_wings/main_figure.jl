@@ -42,8 +42,10 @@ begin # plot B_0 and B_1
 
     xs = layout.points[:, 1] * image_resolution
     ys = layout.points[:, 2] * image_resolution
-    us = layout_end.points[:, 1]* image_resolution - xs 
-    vs = layout_end.points[:, 2]* image_resolution - ys 
+    d(x) = min(0.1 * abs(x-0.5), 0.02)
+    move_arrow(x) = x < 0.5 ? x-d(x) : x+d(x)
+    us = move_arrow.(layout_end.points[:, 1]) * image_resolution - xs 
+    vs = layout_end.points[:, 2] * image_resolution - ys 
     CairoMakie.arrows!(ax11, xs, ys, us, vs, arrowsize = 12, lengthscale = 1, arrowcolor = :red, linecolor = :red)
     fig
     save("project/butterfly_flits_wings/main_butterfly_B_2.pdf", fig)
