@@ -5,11 +5,12 @@ using KrylovKit
 using Test
 using Zygote
 using Random
+using LinearAlgebra
 
 function test_config_continuous(atype)
-    points = atype(rand(10, 2))
+    points = atype(rand(5, 2))
     layout = ContinuousLayout(points)
-    slm = atype(SLM(10))
+    slm = atype(SLM(5))
     algorithm = WGS(verbose=false)
     slm, cost, B = match_image(layout, slm, algorithm)
     return layout, slm, B
@@ -42,56 +43,66 @@ end
     @test B_new ≈ B atol = 1e-2
 end
 
-@testset "∂f/∂A and ∂f/∂ϕ with $atype" for atype in test_atypes
+@testset "implicit function theorem only with ϕ with $atype" for atype in test_atypes
     Random.seed!(42)
     layout, slm, B = test_config_continuous(atype)
-    # ∂f∂x = ForwardDiff.jacobian(x -> fixed_point_map(ContinuousLayout(x), slm, B), layout.points)[1]
+    ∂f∂B = ForwardDiff.jacobian(x -> fixed_point_map(layout, slm, x)[1], B)
 
-    # dxdt = [1e-5 * randn(2) for _ in 1:length(layout.points)]
-    # dfdt = ForwardDiff.derivative(dt -> fixed_point_map(ContinuousLayout(layout.points + dxdt*dt), slm, B), 0.0)
-    # @test size(dfdt[1]) == size(slm.ϕ)
-    # @test size(dfdt[2]) == size(B)
+    dBdt = 1e-5 * randn(size(B)...)
+    dfdt = ForwardDiff.derivative(dt -> fixed_point_map(layout, slm, B + dBdt*dt)[1], 0.0)
+    @test ∂f∂B * dBdt ≈ reshape(dfdt, prod(size(dfdt)))
 
-    # ∂f∂ϕ = jacobian(x -> fixed_point_map(layout, SLM(slm.A, x, slm.SLM2π), B), slm.ϕ)[1]
+    ∂f∂ϕ = ForwardDiff.jacobian(x -> fixed_point_map(layout, SLM(slm.A, x, slm.SLM2π), B)[1], slm.ϕ)
 
-    # dϕdt = rand(size(slm.ϕ)...)
-    # function linemap(dϕdt)
-    #     dϕdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π), B), 0.0)
-    # end
-    # dϕdt1,  = linsolve(x -> linemap(x), dfdt)
-    # dϕdt2,  = linsolve(dϕdt -> dϕdt - ∂f∂ϕ * dϕdt, ∂f∂B * dBdt)
+    function linemap(dϕdt)
+        dϕdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕdt * dt, slm.SLM2π), B)[1], 0.0)
+    end
+    dϕdt1,  = linsolve(x -> linemap(x), dfdt)
+    dϕdt2,  = linsolve(dϕdt -> dϕdt - ∂f∂ϕ * dϕdt, ∂f∂B * dBdt)
 
-    # @test dϕdt2 ≈ reshape(dϕdt1, prod(size(slm.ϕ)))
-
+    @test dϕdt2 ≈ reshape(dϕdt1, prod(size(slm.ϕ)))
 end
 
-@testset "dϕ/dt with $atype" for atype in [Array]
+@testset "implicit function theorem with ϕ and B with $atype with $atype" for atype in test_atypes
     Random.seed!(42)
     layout, slm, B = test_config_continuous(atype)
+    ∂fϕ∂x = ForwardDiff.jacobian(x -> fixed_point_map(ContinuousLayout(x), slm, B)[1], layout.points)
+    ∂fB∂x = ForwardDiff.jacobian(x -> fixed_point_map(ContinuousLayout(x), slm, B)[2], layout.points)
+    
+    dxdt = 1e-5 * randn(size(layout.points)...) 
+    dfdt = ForwardDiff.derivative(dt -> fixed_point_map(ContinuousLayout(layout.points + dxdt*dt), slm, B), 0.0)
+    @test ∂fϕ∂x * dxdt[:] ≈ reshape(dfdt[1], prod(size(dfdt[1]))) 
+    @test ∂fB∂x * dxdt[:] ≈ reshape(dfdt[2], prod(size(dfdt[2]))) 
 
-    dxdt = 1e-5 * layout.points
-    dϕBdt = get_dϕBdt(layout, slm, B, dxdt)
-    @test size(dϕBdt[1]) == size(slm.ϕ)
-    @test size(dϕBdt[2]) == size(B)
+    ∂fϕ∂ϕ = ForwardDiff.jacobian(x -> fixed_point_map(layout, SLM(slm.A, x, slm.SLM2π), B)[1], slm.ϕ)
+    ∂fB∂ϕ = ForwardDiff.jacobian(x -> fixed_point_map(layout, SLM(slm.A, x, slm.SLM2π), B)[2], slm.ϕ)
+    ∂fϕ∂B = ForwardDiff.jacobian(x -> fixed_point_map(layout, slm, x)[1], B)
+    ∂fB∂B = ForwardDiff.jacobian(x -> fixed_point_map(layout, slm, x)[2], B)
+
+    function linemap(dϕBdt)
+        dϕBdt - ForwardDiff.derivative(dt -> fixed_point_map(layout, SLM(slm.A, slm.ϕ + dϕBdt[1] * dt, slm.SLM2π), B + dϕBdt[2] * dt), 0.0)
+    end
+    dϕBdt1,  = linsolve(x -> linemap(x), dfdt)
+    dϕBdt2,  = linsolve(dϕBdt ->  dϕBdt - [∂fϕ∂ϕ * dϕBdt[1] + ∂fϕ∂B * dϕBdt[2], ∂fB∂B * dϕBdt[2] + ∂fB∂ϕ * dϕBdt[1]], [∂fϕ∂x * dxdt[:], ∂fB∂x * dxdt[:]], maxiter = 1)
+    dϕBdt3 = get_dϕBdt(layout, slm, B, dxdt, 10)
+
+    @test reshape(dϕBdt2[1], size(slm.ϕ)) ≈ dϕBdt1[1] 
+    @test dϕBdt1[1] ≈ dϕBdt3[1] atol=1e-2
+    @test reshape(dϕBdt2[2], size(B)) ≈ dϕBdt1[2] 
+    @test dϕBdt1[2] ≈ dϕBdt3[2] atol=1e-4
 end
 
 @testset "evolution_slm continuous with $atype" for atype in test_atypes
     Random.seed!(42)
     points = atype(rand(5, 2))
     layout = ContinuousLayout(points)
-    points_new = points + 1e-5 * atype(randn(size(points)))
+    points_new = points + 1e-1 * atype(randn(size(points)))
     layout_new = ContinuousLayout(points_new)
     slm = atype(SLM(10))
 
-    layouts, slms = evolution_slm(layout, layout_new, slm, WGS(verbose=false);
-                                   slices=5, 
-                                   interps=1, 
-                                   aditers=5,
-                                   ifflow=true)
-    #     d = ϕdiff(slms[i+1], slms[i])
-    #     println(maximum(abs.(d)))
-    # end
-    @test length(slms) == 6
-    # plot(layouts, slms)
-    # plot(slms)
+    layouts, slms = evolution_slm_flow(layout, layout_new, slm, WGS(verbose=false);
+                                       interps=6, 
+                                       aditers=5)
+
+    @test length(layouts) == length(slms)
 end
