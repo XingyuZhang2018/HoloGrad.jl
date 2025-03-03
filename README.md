@@ -20,7 +20,7 @@ Activating project at `~/qgh`
 (qgh) pkg> instantiate
 ```
 
-## Review
+## Overview
 There are four main parts in this project:
 - `src/`: the source code of the project
 - `example/`: the example of the butterfly graph
