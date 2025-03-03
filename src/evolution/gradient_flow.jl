@@ -32,7 +32,7 @@ end
 """
     Get the time derivative of the phase in the SLM plane by iterations.
 """
-function get_dϕBdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5)
+function get_dϕBdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5; ifdBdt=false)
     function f(dt)
         layout = ContinuousLayout(layout.points + dxdt*dt)
         for _ in 1:iters
@@ -43,8 +43,12 @@ function get_dϕBdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5)
     end
     
     dϕdt = ForwardDiff.derivative(dt -> f(dt)[1], 0.0)
-    dBdt = ForwardDiff.derivative(dt -> f(dt)[2], 0.0)
-    return dϕdt, ForwardDiff.value.(dBdt)
+    if ifdBdt
+        dBdt = ForwardDiff.derivative(dt -> f(dt)[2], 0.0) # we don't need dBdt for flow evolution
+        return dϕdt, ForwardDiff.value.(dBdt)
+    else
+        return dϕdt, nothing
+    end
 end
 
 function get_dϕdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5)
@@ -176,9 +180,9 @@ function evolution_slm_flow(layout::ContinuousLayout, layout_end::Layout, slm::S
 
         t0 = time()
         if ifimplicit
-            dϕdt_new, dBdt_new = get_dϕBdt(layout_new, slm_new, B, dxdt) # by implicit function theorem
+            dϕdt_new, = get_dϕBdt(layout_new, slm_new, B, dxdt) # by implicit function theorem
         else
-            dϕdt_new, dBdt_new = get_dϕBdt(layout_new, slm_new, B, dxdt, aditers)
+            dϕdt_new, = get_dϕBdt(layout_new, slm_new, B, dxdt, aditers)
         end
         t1 = time()
         print(@sprintf("    Finish dϕdt time = %.2f s\n", t1-t0))
@@ -246,7 +250,7 @@ function evolution_slm_pure_flow(layout::ContinuousLayout, layout_end::Layout, s
 
     t0 = time()
     if ifimplicit
-        dϕdt, dBdt = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
+        dϕdt, = get_dϕBdt(layout, slm, B, dxdt) # by implicit function theorem
     else
         dϕdt = get_dϕdt(layout, slm, B, dxdt, aditers)
     end

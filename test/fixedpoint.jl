@@ -84,7 +84,7 @@ end
     end
     dϕBdt1,  = linsolve(x -> linemap(x), dfdt)
     dϕBdt2,  = linsolve(dϕBdt ->  dϕBdt - [∂fϕ∂ϕ * dϕBdt[1] + ∂fϕ∂B * dϕBdt[2], ∂fB∂B * dϕBdt[2] + ∂fB∂ϕ * dϕBdt[1]], [∂fϕ∂x * dxdt[:], ∂fB∂x * dxdt[:]], maxiter = 1)
-    dϕBdt3 = get_dϕBdt(layout, slm, B, dxdt, 10)
+    dϕBdt3 = get_dϕBdt(layout, slm, B, dxdt, 10; ifdBdt=true)
 
     @test reshape(dϕBdt2[1], size(slm.ϕ)) ≈ dϕBdt1[1] 
     @test dϕBdt1[1] ≈ dϕBdt3[1] atol=1e-2

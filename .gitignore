@@ -1,6 +1,11 @@
 /Manifest.toml
-*.gif
-*.mp4
-*.svg
-*.pdf
-*.png
+/example/**/*.gif
+/example/**/*.mp4
+/example/**/*.svg
+/example/**/*.pdf
+/example/**/*.png
+/project/**/*.gif
+/project/**/*.mp4
+/project/**/*.svg
+/project/**/*.pdf
+/project/**/*.png
