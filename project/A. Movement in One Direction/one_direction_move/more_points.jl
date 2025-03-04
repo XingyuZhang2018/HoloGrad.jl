@@ -36,7 +36,7 @@ begin # plot exact ϕ and B
     Colorbar(fig[1, 2][1, 2], hm)
 
     # display(fig)
-    save("project/one_direction_move/more_points_B.pdf", fig)
+    save("project/A. Movement in One Direction/one_direction_move/more_points_B.pdf", fig)
 end
 
 begin # plot flow implicit
@@ -59,7 +59,7 @@ begin # plot flow implicit
     hidedecorations!(ax12)
     Colorbar(fig[1, 2][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]))
 
-    save("project/one_direction_move/more_points_Delta_phi_wgs_flow.pdf", fig)
+    save("project/A. Movement in One Direction/one_direction_move/more_points_Delta_phi_wgs_flow.pdf", fig)
 end
 
 begin # plot flow without implicit
@@ -101,7 +101,7 @@ begin # plot flow without implicit
     hidedecorations!(ax22)
     Colorbar(fig[2, 2][1, 2], hm, tickformat =  "{:.2f}")
 
-    save("project/one_direction_move/more_points_Delta_phi_implicit_expand.pdf", fig)
+    save("project/A. Movement in One Direction/one_direction_move/more_points_Delta_phi_implicit_expand.pdf", fig)
 end
 
 begin 
@@ -121,5 +121,5 @@ begin
     CairoMakie.lines!(ax11, 1:naditers, errs, color = :black)
     CairoMakie.plot!(ax11, 1:naditers, errs, label = "error")
 
-    save("project/one_direction_move/more_points_error_aditers.pdf", fig)
+    save("project/A. Movement in One Direction/one_direction_move/more_points_error_aditers.pdf", fig)
 end

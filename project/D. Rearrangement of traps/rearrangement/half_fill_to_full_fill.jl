@@ -52,7 +52,7 @@ begin
     Colorbar(fig[1, 2][1, 2], hm)
 
     display(fig)
-    save("project/rearrangement/half_fill_to_full_fill.png", fig)
+    save("project/D. Rearrangement of traps/rearrangement/half_fill_to_full_fill.png", fig)
 end
 
 begin # optimize the order of layout_0 to layout_1 using Hungarian algorithm
@@ -85,10 +85,10 @@ begin # plot flow move image
                                                  interps=10, 
                                                  aditers=15,
                                                  ifimplicit=false,
-                                                 α = 0.5, β = 1)
+                                                 α = 0.5, β = 1.0)
     # layouts_exact, slms_flow, = evolution_slm_direct(layout_0, layout_1, slm, algorithm; keypoints=10)
     qgh.image_animation(slms_flow, image_resolution; 
-                        file = "project/rearrangement/half_fill_to_full_fill_flow_move.mp4")
+                        file = "project/D. Rearrangement of traps/rearrangement/half_fill_to_full_fill_flow_move.mp4")
 end
 
 begin # decay
@@ -149,5 +149,5 @@ begin # decay
 
     rowgap!(fig.layout, 0)
     display(fig)
-    save("project/rearrangement/half_fill_to_full_fill_all.pdf", fig)
+    save("project/D. Rearrangement of traps/rearrangement/half_fill_to_full_fill_all.pdf", fig)
 end

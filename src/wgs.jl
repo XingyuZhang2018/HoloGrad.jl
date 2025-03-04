@@ -69,7 +69,7 @@ function match_image(layout::Layout, slm::SLM, target_A_reweight, algorithm::WGS
 
     t1 = time()
     stdmean = compute_cost(trap_A)
-    print(@sprintf("Finish WGS at %d iterations\n  total_time = %.2f s\tsingle_time = %.2f ms\tcost = %.3e\n", iters, (t1-t0), (t1-t0)/iters*1000, stdmean))
+    algorithm.verbose && print(@sprintf("Finish WGS at %d iterations\n  total_time = %.2f s\tsingle_time = %.2f ms\tcost = %.3e\n", iters, (t1-t0), (t1-t0)/iters*1000, stdmean))
 
     return SLM(slm.A, ϕ, slm.SLM2π), stdmean, target_A_reweight
 end

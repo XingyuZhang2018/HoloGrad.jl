@@ -32,7 +32,7 @@ end
 """
     Get the time derivative of the phase in the SLM plane by iterations.
 """
-function get_dϕBdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5; ifdBdt=false)
+function get_dϕBdt(layout::Layout, slm::SLM, B, dxdt, iters::Int; ifdBdt=false)
     function f(dt)
         layout = ContinuousLayout(layout.points + dxdt*dt)
         for _ in 1:iters
@@ -51,7 +51,7 @@ function get_dϕBdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5; ifdBdt=fals
     end
 end
 
-function get_dϕdt(layout::Layout, slm::SLM, B, dxdt, iters::Int=5)
+function get_dϕdt(layout::Layout, slm::SLM, B, dxdt, iters::Int)
     function f(dt)
         layout = ContinuousLayout(layout.points + dxdt*dt)
         for _ in 1:iters

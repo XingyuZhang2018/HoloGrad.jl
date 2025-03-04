@@ -41,7 +41,7 @@ begin # plot exact ϕ and B
     Colorbar(fig[2, 2][1, 2], hm, ticklabelsize = 12)
 
     # display(fig)
-    save("project/one_direction_move/one_point_phi_B.pdf", fig)
+    save("project/A. Movement in One Direction/one_direction_move/one_point_phi_B.pdf", fig)
 end
 
 begin # plot flow implicit
@@ -69,7 +69,7 @@ begin # plot flow implicit
     hidedecorations!(ax13)
     Colorbar(fig[1, 3][1, 2], hm, tickformat =  "{:.0e}")
 
-    save("project/one_direction_move/one_point_Delta_phi_implicit.pdf", fig)
+    save("project/A. Movement in One Direction/one_direction_move/one_point_Delta_phi_implicit.pdf", fig)
 end
 
 begin # plot flow without implicit
@@ -97,5 +97,5 @@ begin # plot flow without implicit
     hidedecorations!(ax13)
     Colorbar(fig[1, 3][1, 2], hm, tickformat =  "{:.2e}")
 
-    save("project/one_direction_move/one_point_Delta_phi.pdf", fig)
+    save("project/A. Movement in One Direction/one_direction_move/one_point_Delta_phi.pdf", fig)
 end

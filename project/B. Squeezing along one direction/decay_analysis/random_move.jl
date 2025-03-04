@@ -4,7 +4,7 @@ using Random
 
 begin # slms exact move
     Random.seed!(42)
-    include("../../example/layout_example.jl")
+    include("../../../example/layout_example.jl")
 
     atype = Array # or Array
     image_resolution = 1000
@@ -21,7 +21,7 @@ begin # slms exact move
     layouts_exact, slms_exact = evolution_slm_direct(layout, layout_end, slm, algorithm; keypoints=100)
 
     qgh.image_animation(slms_exact, image_resolution; 
-                        file = "project/decay_analysis/random_exact_move.mp4")
+                        file = "project/B. Squeezing along one direction/decay_analysis/random_exact_move.mp4")
 end
 
 begin # plot flow move image
@@ -30,23 +30,23 @@ begin # plot flow move image
                                                  aditers=10,
                                                  ifimplicit=false, β=1)
     qgh.image_animation(slms_flow, image_resolution; 
-                        file = "project/decay_analysis/random_flow_move.mp4")
+                        file = "project/B. Squeezing along one direction/decay_analysis/random_flow_move.mp4")
 end
 
-begin # plot more flow moves
-    fig = Figure(size = (800, 800))
-    fa = fig[1, 1] = GridLayout()
+# begin # plot more flow moves
+#     fig = Figure(size = (800, 800))
+#     fa = fig[1, 1] = GridLayout()
 
-    ax1 = Axis(fa[1, 1], aspect = DataAspect())
-    qgh.heatmap!(ax1, slms_flow[1], image_resolution)
-    ax2 = Axis(fa[1, 2], aspect = DataAspect())
-    qgh.heatmap!(ax2, slms_flow[end], image_resolution)
-    area = [(50, 800), (120, 890)]
-    qgh.plot_rectange!(ax1, area)
-    qgh.plot_rectange!(ax2, area)
+#     ax1 = Axis(fa[1, 1], aspect = DataAspect())
+#     qgh.heatmap!(ax1, slms_flow[1], image_resolution)
+#     ax2 = Axis(fa[1, 2], aspect = DataAspect())
+#     qgh.heatmap!(ax2, slms_flow[end], image_resolution)
+#     area = [(50, 800), (120, 890)]
+#     qgh.plot_rectange!(ax1, area)
+#     qgh.plot_rectange!(ax2, area)
 
-    f2 = fig[2, 1] = GridLayout()
-    qgh.plot_distance_intensity_decay!(f2, slms_flow[1:end], area, image_resolution; color = :red, label = "flow")
-    CairoMakie.colgap!(f2, -150)
-    display(fig)
-end
+#     f2 = fig[2, 1] = GridLayout()
+#     qgh.plot_distance_intensity_decay!(f2, slms_flow[1:end], area, image_resolution; color = :red, label = "flow")
+#     CairoMakie.colgap!(f2, -150)
+#     display(fig)
+# end

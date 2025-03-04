@@ -1,10 +1,17 @@
-# qgh
+# Dynamic Hologram Generation with Automatic Differentiation
 
 [![Build Status](https://github.com/XingyuZhang2018/qgh/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/XingyuZhang2018/qgh.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![codecov](https://codecov.io/gh/XingyuZhang2018/qgh/graph/badge.svg?token=jCbMe1oSPj)](https://codecov.io/gh/XingyuZhang2018/qgh)
 
 
-This is a Julia project for quantum graph homology.
+This is a Julia project to evolute the hologram using gradient. 
+
+## Overview
+There are four main parts in this project:
+- `src/`: the source code of the project
+- `example/`: the example of the butterfly graph
+- `project/`: the plots of all the results in paper [Dynamic Hologram Generation with Automatic Differentiation](https://arxiv.org/abs/...)
+- `benchmark/`: the benchmark of the project with CPU and GPU acceleration
 
 ## Installation
 ```shell
@@ -19,13 +26,6 @@ Activating project at `~/qgh`
 ```julia
 (qgh) pkg> instantiate
 ```
-
-## Overview
-There are four main parts in this project:
-- `src/`: the source code of the project
-- `example/`: the example of the butterfly graph
-- `project/`: the plots of all the results in paper [Dynamic Hologram Generation with Automatic Differentiation](https://arxiv.org/abs/...)
-- `benchmark/`: the benchmark of the project with CPU and GPU acceleration
 
 ## Basic Usage Example: Continuous Evolution of Butterfly Graph
 Here's a step-by-step guide to generate the continuous evolution animation:
@@ -46,6 +46,7 @@ press `Backspace` into `Julia REPL`
 julia> using qgh
 julia> using Random
 julia> using CUDA  # Optional for GPU acceleration
+```
 
 ###  Set random seed for reproducibility
 ```julia

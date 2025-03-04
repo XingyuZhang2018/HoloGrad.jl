@@ -5,7 +5,7 @@ using LinearAlgebra
 
 begin # slms exact move
     Random.seed!(42)
-    include("../../example/layout_example.jl")
+    include("../../../example/layout_example.jl")
 
     atype = Array # or CuArray
     N = 100
@@ -23,7 +23,7 @@ begin # slms exact move
 
     # qgh.heatmap(slms_exact[[1,end]], image_resolution)
     # qgh.image_animation(slms_exact, image_resolution; 
-    #                     file = "project/shape_change/circle_to_ellipse_exact_move.mp4")
+    #                     file = "project/C. Moving a subset of traps/shape_change/circle_to_ellipse_exact_move.mp4")
 end
 
 begin # plot exact ϕ and B
@@ -45,7 +45,7 @@ begin # plot exact ϕ and B
     qgh.plot_rectange!(ax12, areas[end])
 
     # display(fig)
-    save("project/shape_change/circle_to_ellipse_B.pdf", fig)
+    save("project/C. Moving a subset of traps/shape_change/circle_to_ellipse_B.pdf", fig)
 end
 
 begin # plot flow move image
@@ -55,7 +55,7 @@ begin # plot flow move image
                                                  ifimplicit=false,
                                                  α = 0.5, β = 1)
     qgh.image_animation(slms_flow, image_resolution; 
-                        file = "project/shape_change/circle_to_ellipse_flow_move.mp4")
+                        file = "project/C. Moving a subset of traps/shape_change/circle_to_ellipse_flow_move.mp4")
 end
 
 begin # decay
@@ -116,5 +116,5 @@ begin # decay
 
     rowgap!(fig.layout, 0)
     # display(fig)
-    save("project/shape_change/circle_to_ellipse_all.pdf", fig)
+    save("project/C. Moving a subset of traps/shape_change/circle_to_ellipse_all.pdf", fig)
 end

@@ -4,7 +4,7 @@ using Random
 
 begin # slms_exact data
     Random.seed!(42)
-    include("../../example/layout_example.jl")
+    include("../../../example/layout_example.jl")
 
     atype = Array # or Array
 

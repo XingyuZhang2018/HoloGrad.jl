@@ -5,7 +5,7 @@ using LinearAlgebra
 
 begin # slms exact move
     Random.seed!(42)
-    include("../../example/layout_example.jl")
+    include("../../../example/layout_example.jl")
 
     atype = Array # or CuArray
     N = 50
@@ -50,7 +50,7 @@ begin # plot exact ϕ and B
     end
 
     display(fig)
-    save("project/logical_quantum_processor/logical_quantum_processor_B.pdf", fig)
+    save("project/C. Moving a subset of traps/logical_quantum_processor/logical_quantum_processor_B.pdf", fig)
 end
 
 begin # plot flow move image
@@ -157,5 +157,5 @@ begin # butterfly_flow_all
         Label(layout[1, 1, TopLeft()], label, padding = (0, 10, 10, 0))
     end
     display(fig)
-    save("project/logical_quantum_processor/logical_quantum_processor_flow_all.pdf", fig)
+    save("project/C. Moving a subset of traps/logical_quantum_processor/logical_quantum_processor_flow_all.pdf", fig)
 end

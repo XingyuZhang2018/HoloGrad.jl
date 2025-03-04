@@ -7,7 +7,7 @@ using Test
 
 @testset "butterfly" for atype in [Array, CuArray]
     Random.seed!(42)
-    include("../../example/layout_example.jl")
+    include("../../../example/layout_example.jl")
 
     N = 1024
 
@@ -20,17 +20,18 @@ using Test
     Δx = layout_end.points - layout.points
     dxdt = Δx
     aditers = 15
+    slm, cost, B = match_image(layout, slm, algorithm)
     println("WGS $atype time:")
-    @btime CUDA.@sync slm, cost, B = match_image($layout, $slm, $algorithm)
-    # println("implicit $atype time:")
-    # @btime CUDA.@sync qgh.get_dϕdt($layout, $slm, $B, $dxdt, $aditers)
-    # println("expand $atype time:")
-    # @btime CUDA.@sync qgh.get_dϕdt($layout, $slm, $B, $dxdt)
+    @btime CUDA.@sync match_image($layout, $slm, $algorithm)
+    println("implicit $atype time:")
+    @btime CUDA.@sync qgh.get_dϕdt($layout, $slm, $B, $dxdt)
+    println("expand $atype time:")
+    @btime CUDA.@sync qgh.get_dϕdt($layout, $slm, $B, $dxdt, $aditers)
 end
 
 @testset "circle" for atype in [Array, CuArray]
     Random.seed!(42)
-    include("../../example/layout_example.jl")
+    include("../../../example/layout_example.jl")
 
     N = 1024
 
@@ -43,10 +44,11 @@ end
     Δx = layout_end.points - layout.points
     dxdt = Δx
     aditers = 15
+    slm, cost, B = match_image(layout, slm, algorithm)
     println("WGS $atype time:")
-    @btime CUDA.@sync slm, cost, B = match_image($layout, $slm, $algorithm)
-    # println("implicit $atype time:")
-    # @btime CUDA.@sync qgh.get_dϕdt($layout, $slm, $B, $dxdt, $aditers)
-    # println("expand $atype time:")
-    # @btime CUDA.@sync qgh.get_dϕdt($layout, $slm, $B, $dxdt)
+    @btime CUDA.@sync match_image($layout, $slm, $algorithm)
+    println("implicit $atype time:")
+    @btime CUDA.@sync qgh.get_dϕdt($layout, $slm, $B, $dxdt)
+    println("expand $atype time:")
+    @btime CUDA.@sync qgh.get_dϕdt($layout, $slm, $B, $dxdt, $aditers)
 end

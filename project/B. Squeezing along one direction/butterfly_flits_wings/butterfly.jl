@@ -6,7 +6,7 @@ using LinearAlgebra
 begin # slms_exact data
     Random.seed!(42)
 
-    include("../../example/layout_example.jl")
+    include("../../../example/layout_example.jl")
     atype = Array # or CuArray
     N = 100
 
@@ -39,7 +39,7 @@ begin # plot exact ϕ and B
     qgh.plot_rectange!(ax12, areas[end])
 
     # display(fig)
-    save("project/butterfly_flits_wings/butterfly_B.pdf", fig)
+    save("project/B. Squeezing along one direction/butterfly_flits_wings/butterfly_B.pdf", fig)
 end
 
 begin # butterfly_flow_decay
@@ -105,7 +105,7 @@ begin # butterfly_flow_decay
     )
 
     # display(fig)
-    save("project/butterfly_flits_wings/butterfly_flow_decay.pdf", fig)
+    save("project/B. Squeezing along one direction/butterfly_flits_wings/butterfly_flow_decay.pdf", fig)
 end
 
 begin # flow date
@@ -159,7 +159,7 @@ begin # butterfly_flow_all
         Label(layout[1, 1, TopLeft()], label, padding = (0, 10, 10, 0))
     end
     display(fig)
-    save("project/butterfly_flits_wings/butterfly_flow_all.pdf", fig)
+    save("project/B. Squeezing along one direction/butterfly_flits_wings/butterfly_flow_all.pdf", fig)
 end
 
 begin
@@ -190,6 +190,6 @@ begin
     qgh.plot_slms_ϕ_diff!(ax22, slms_flow[1:2]; color = :red)
 
     # fig
-    save("project/butterfly_flits_wings/butterfly_Delta_phi_wgs_flow.pdf", fig)
+    save("project/B. Squeezing along one direction/butterfly_flits_wings/butterfly_Delta_phi_wgs_flow.pdf", fig)
 end
 

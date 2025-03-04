@@ -41,7 +41,7 @@ struct ContinuousLayout <: Layout
     points::AbstractArray
     ntrap::Int
     function ContinuousLayout(points::AbstractArray)
-        @assert all(0 .<= points .<= 1) "All points must be normalized in the range [0, 1]"
+        @assert all(-0.01 .<= points .<= 1.01) "All points must be normalized in the range [0, 1]" # not so strict (0.01) for some cases
         new(points, size(points, 1))
     end
 end
