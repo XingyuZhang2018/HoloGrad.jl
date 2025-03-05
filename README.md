@@ -1,7 +1,7 @@
 # HoloGrad.jl: Dynamic Hologram Generation with Gradient
 
-[![Build Status](https://github.com/XingyuZhang2018/HoloGrad/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/XingyuZhang2018/HoloGrad.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![codecov](https://codecov.io/gh/XingyuZhang2018/HoloGrad/graph/badge.svg?token=jCbMe1oSPj)](https://codecov.io/gh/XingyuZhang2018/HoloGrad)
+[![Build Status](https://github.com/XingyuZhang2018/HoloGrad.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/XingyuZhang2018/HoloGrad.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![codecov](https://codecov.io/gh/XingyuZhang2018/HoloGrad.jl/graph/badge.svg?token=jCbMe1oSPj)](https://codecov.io/gh/XingyuZhang2018/HoloGrad.jl)
 
 
 This is a Julia project to evolute the hologram using gradient. 
