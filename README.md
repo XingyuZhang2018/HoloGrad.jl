@@ -7,11 +7,10 @@
 This is a Julia project to evolute the hologram using gradient. 
 
 ## Overview
-There are four main parts in this project:
+There are three main parts in this project:
 - `src/`: the source code of the project
 - `example/`: the example of the butterfly graph
-- `project/`: the plots of all the results in paper [Dynamic Hologram Generation with Automatic Differentiation](https://arxiv.org/abs/...)
-- `benchmark/`: the benchmark of the project with CPU and GPU acceleration
+- `project/`: Contains all plots and benchmark results presented in the paper [Dynamic Hologram Generation with Automatic Differentiation](https://arxiv.org/abs/...)
 
 ## Installation
 ```shell
