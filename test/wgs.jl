@@ -1,4 +1,4 @@
-using qgh
+using HoloGrad
 using Test
 
 @testset "wgs cft with $atype" for atype in test_atypes

@@ -1,4 +1,4 @@
-using qgh
+using HoloGrad
 using CairoMakie
 using Random
 
@@ -20,7 +20,7 @@ begin # slms exact move
     #benchmark
     layouts_exact, slms_exact = evolution_slm_direct(layout, layout_end, slm, algorithm; keypoints=100)
 
-    qgh.image_animation(slms_exact, image_resolution; 
+    HoloGrad.image_animation(slms_exact, image_resolution; 
                         file = "project/B. Squeezing along one direction/decay_analysis/random_exact_move.mp4")
 end
 
@@ -29,7 +29,7 @@ begin # plot flow move image
                                                  interps=10, 
                                                  aditers=10,
                                                  ifimplicit=false, β=1)
-    qgh.image_animation(slms_flow, image_resolution; 
+    HoloGrad.image_animation(slms_flow, image_resolution; 
                         file = "project/B. Squeezing along one direction/decay_analysis/random_flow_move.mp4")
 end
 
@@ -38,15 +38,15 @@ end
 #     fa = fig[1, 1] = GridLayout()
 
 #     ax1 = Axis(fa[1, 1], aspect = DataAspect())
-#     qgh.heatmap!(ax1, slms_flow[1], image_resolution)
+#     HoloGrad.heatmap!(ax1, slms_flow[1], image_resolution)
 #     ax2 = Axis(fa[1, 2], aspect = DataAspect())
-#     qgh.heatmap!(ax2, slms_flow[end], image_resolution)
+#     HoloGrad.heatmap!(ax2, slms_flow[end], image_resolution)
 #     area = [(50, 800), (120, 890)]
-#     qgh.plot_rectange!(ax1, area)
-#     qgh.plot_rectange!(ax2, area)
+#     HoloGrad.plot_rectange!(ax1, area)
+#     HoloGrad.plot_rectange!(ax2, area)
 
 #     f2 = fig[2, 1] = GridLayout()
-#     qgh.plot_distance_intensity_decay!(f2, slms_flow[1:end], area, image_resolution; color = :red, label = "flow")
+#     HoloGrad.plot_distance_intensity_decay!(f2, slms_flow[1:end], area, image_resolution; color = :red, label = "flow")
 #     CairoMakie.colgap!(f2, -150)
 #     display(fig)
 # end

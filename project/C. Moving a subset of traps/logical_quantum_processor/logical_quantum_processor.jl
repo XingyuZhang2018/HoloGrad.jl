@@ -1,4 +1,4 @@
-using qgh
+using HoloGrad
 using CairoMakie
 using Random
 using LinearAlgebra
@@ -28,22 +28,22 @@ begin # plot exact ϕ and B
     fig = Figure(size = (500, 360))
 
     ax = Axis(fig[1, 1], aspect = DataAspect(), title = L"B_0")
-    hm = qgh.heatmap!(ax, slm_exact_0, 5*image_resolution, image_resolution)
+    hm = HoloGrad.heatmap!(ax, slm_exact_0, 5*image_resolution, image_resolution)
     hidedecorations!(ax)
     Colorbar(fig[1, 1][1, 2], hm)
-    qgh.plot_rectange!(ax, [[450, 25], [600, 100]] .* 0.5)
+    HoloGrad.plot_rectange!(ax, [[450, 25], [600, 100]] .* 0.5)
 
     ax = Axis(fig[2, 1], aspect = DataAspect(), title = L"B_1")
-    hm = qgh.heatmap!(ax, slm_exact_1, 5*image_resolution, image_resolution)
+    hm = HoloGrad.heatmap!(ax, slm_exact_1, 5*image_resolution, image_resolution)
     hidedecorations!(ax)
     Colorbar(fig[2, 1][1, 2], hm)
-    qgh.plot_rectange!(ax, [[450, 25], [600, 100]] .* 0.5)
+    HoloGrad.plot_rectange!(ax, [[450, 25], [600, 100]] .* 0.5)
 
     ax = Axis(fig[3, 1], aspect = DataAspect(), title = L"B_2")
-    hm = qgh.heatmap!(ax, slm_exact_2, 5*image_resolution, image_resolution)
+    hm = HoloGrad.heatmap!(ax, slm_exact_2, 5*image_resolution, image_resolution)
     hidedecorations!(ax)
     Colorbar(fig[3, 1][1, 2], hm)
-    qgh.plot_rectange!(ax, [[290, 25], [440, 100]] .* 0.5)
+    HoloGrad.plot_rectange!(ax, [[290, 25], [440, 100]] .* 0.5)
 
     for (i,l) in zip(1:3, ["(a)", "(b)", "(c)"])
         Label(fig[i, 1, Left()], l)
@@ -69,15 +69,15 @@ end
 
 begin # decay
     image_resolution = 400
-    areas = qgh.find_area(layout_0, layout_1, [image_resolution*5, image_resolution], length(slms_flow_0) - 1; area_size=0.03)
+    areas = HoloGrad.find_area(layout_0, layout_1, [image_resolution*5, image_resolution], length(slms_flow_0) - 1; area_size=0.03)
 
     fig = Figure(size = (500, 500))
     fa = fig[1, 1] = GridLayout()
     for (i, j) in zip(1:6, LinRange(1, length(slms_flow_0), 6))
         axi = Axis(fa[i, 1], aspect = DataAspect())
-        qgh.heatmap!(axi, slms_flow_0[round(Int,j)], image_resolution*5, image_resolution)
+        HoloGrad.heatmap!(axi, slms_flow_0[round(Int,j)], image_resolution*5, image_resolution)
         hidedecorations!(axi)
-        qgh.plot_rectange!(axi, areas[round(Int,j)])
+        HoloGrad.plot_rectange!(axi, areas[round(Int,j)])
     end
     colgap!(fa, 5)
     
@@ -91,12 +91,12 @@ begin # decay
     fb = fig[1, 2] = GridLayout()
     image_resolution = 1000
 
-    areas = qgh.find_area(layout_0, layout_1, [image_resolution*5, image_resolution], length(slms_flow_0) - 1; area_size=0.03)
+    areas = HoloGrad.find_area(layout_0, layout_1, [image_resolution*5, image_resolution], length(slms_flow_0) - 1; area_size=0.03)
     positions = []
     intensities = Array{Float64}([])
     
     for i in 1:length(slms_flow_0)
-        intensity, position = qgh.find_max_intensity(slms_flow_0[i], areas[i], image_resolution*5, image_resolution)
+        intensity, position = HoloGrad.find_max_intensity(slms_flow_0[i], areas[i], image_resolution*5, image_resolution)
         push!(positions, position)
         push!(intensities, intensity)
     end
@@ -132,12 +132,12 @@ begin # butterfly_flow_all
     fig = Figure(size = (400, 450))
 
     for (i, slms_flow, layout) in zip(1:2, [slms_flow_0, slms_flow_1], [[layout_0, layout_1], [layout_1, layout_2]])
-        areas = qgh.find_area(layout[1], layout[2], [image_resolution*5, image_resolution], length(slms_flow) - 1; area_size=0.01)
+        areas = HoloGrad.find_area(layout[1], layout[2], [image_resolution*5, image_resolution], length(slms_flow) - 1; area_size=0.01)
         positions = []
         intensities = Array{Float64}([])
         
         for i in 1:length(slms_flow)
-            intensity, position = qgh.find_max_intensity(slms_flow[i], areas[i], image_resolution*5, image_resolution)
+            intensity, position = HoloGrad.find_max_intensity(slms_flow[i], areas[i], image_resolution*5, image_resolution)
             push!(positions, position)
             push!(intensities, intensity)
         end

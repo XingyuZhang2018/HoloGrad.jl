@@ -1,4 +1,4 @@
-using qgh
+using HoloGrad
 using Random
 using CUDA
 
@@ -17,5 +17,5 @@ let
 
     layouts, slms = evolution_slm_flow(layout, layout_new, slm, algorithm)
 
-    qgh.image_animation(slms, 200; file = "example/butterflycontinuous.gif")
+    HoloGrad.image_animation(slms, 200; file = "example/butterflycontinuous.gif")
 end

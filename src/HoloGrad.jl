@@ -1,4 +1,4 @@
-module qgh
+module HoloGrad
 
     using CairoMakie
     using CUDA

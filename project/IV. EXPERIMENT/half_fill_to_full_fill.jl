@@ -1,4 +1,4 @@
-using qgh
+using HoloGrad
 using CairoMakie
 using Random
 using LinearAlgebra

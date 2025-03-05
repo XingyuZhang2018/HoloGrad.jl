@@ -1,4 +1,4 @@
-using qgh
+using HoloGrad
 using CairoMakie
 using Random
 using LinearAlgebra
@@ -42,12 +42,12 @@ begin
     fig = Figure(size = (500, 200))
 
     ax = Axis(fig[1, 1], aspect = DataAspect(), title = L"B_0")
-    hm = qgh.heatmap!(ax, slm_0, image_resolution)
+    hm = HoloGrad.heatmap!(ax, slm_0, image_resolution)
     hidedecorations!(ax)
     Colorbar(fig[1, 1][1, 2], hm)
 
     ax = Axis(fig[1, 2], aspect = DataAspect(), title = L"B_1")
-    hm = qgh.heatmap!(ax, slm_1, image_resolution)
+    hm = HoloGrad.heatmap!(ax, slm_1, image_resolution)
     hidedecorations!(ax)
     Colorbar(fig[1, 2][1, 2], hm)
 
@@ -87,21 +87,21 @@ begin # plot flow move image
                                                  ifimplicit=false,
                                                  α = 0.5, β = 1.0)
     # layouts_exact, slms_flow, = evolution_slm_direct(layout_0, layout_1, slm, algorithm; keypoints=10)
-    qgh.image_animation(slms_flow, image_resolution; 
+    HoloGrad.image_animation(slms_flow, image_resolution; 
                         file = "project/D. Rearrangement of traps/rearrangement/half_fill_to_full_fill_flow_move.mp4")
 end
 
 begin # decay
     image_resolution = 200
-    areas = qgh.find_area(layout_0, layout_1, image_resolution, length(slms_flow) - 1; area_size=0.05)
+    areas = HoloGrad.find_area(layout_0, layout_1, image_resolution, length(slms_flow) - 1; area_size=0.05)
 
     fig = Figure(size = (400, 250))
     fa = fig[1, 1] = GridLayout()
     for (i, j) in zip(1:6, LinRange(1, length(slms_flow), 6))
         axi = Axis(fa[1, i], aspect = DataAspect())
-        qgh.heatmap!(axi, slms_flow[round(Int,j)], image_resolution)
+        HoloGrad.heatmap!(axi, slms_flow[round(Int,j)], image_resolution)
         hidedecorations!(axi)
-        qgh.plot_rectange!(axi, areas[round(Int,j)], strokewidth = 0.5)
+        HoloGrad.plot_rectange!(axi, areas[round(Int,j)], strokewidth = 0.5)
     end
     colgap!(fa, 5)
     
@@ -115,12 +115,12 @@ begin # decay
     fb = fig[2, 1] = GridLayout()
     image_resolution = 1000
 
-    areas = qgh.find_area(layout_0, layout_1, image_resolution, length(slms_flow) - 1; area_size=0.01)
+    areas = HoloGrad.find_area(layout_0, layout_1, image_resolution, length(slms_flow) - 1; area_size=0.01)
     positions = []
     intensities = Array{Float64}([])
     
     for i in 1:length(slms_flow)
-        intensity, position = qgh.find_max_intensity(slms_flow[i], areas[i], image_resolution, image_resolution)
+        intensity, position = HoloGrad.find_max_intensity(slms_flow[i], areas[i], image_resolution, image_resolution)
         push!(positions, position)
         push!(intensities, intensity)
     end

@@ -1,4 +1,4 @@
-using qgh
+using HoloGrad
 
 # butterfly continuous layout
 function layout_example(::Val{:butterflycontinuous}; α = 0.0)

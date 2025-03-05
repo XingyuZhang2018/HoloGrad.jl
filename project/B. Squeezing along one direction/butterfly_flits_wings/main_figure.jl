@@ -1,4 +1,4 @@
-using qgh
+using HoloGrad
 using CairoMakie
 using Random
 using LinearAlgebra
@@ -25,7 +25,7 @@ begin # plot B_0 and B_1
 
     fig = Figure(size = (400, 400), figure_padding = 0)
     ax11 = Axis(fig[1, 1], aspect = DataAspect())
-    hm = qgh.heatmap!(ax11, slms_exact[1], image_resolution)
+    hm = HoloGrad.heatmap!(ax11, slms_exact[1], image_resolution)
     hidedecorations!(ax11)
 
     save("project/B. Squeezing along one direction/butterfly_flits_wings/main_butterfly_B_1.png", fig)
@@ -37,7 +37,7 @@ begin # plot B_0 and B_1
     fig = Figure(size = (400, 400), figure_padding = 0)
     ax11 = Axis(fig[1, 1], aspect = DataAspect())
 
-    hm = qgh.heatmap!(ax11, slms_exact[end], image_resolution)
+    hm = HoloGrad.heatmap!(ax11, slms_exact[end], image_resolution)
     hidedecorations!(ax11)
 
     xs = layout.points[:, 1] * image_resolution
@@ -57,7 +57,7 @@ begin # plot B_0 and B_1
     fig = Figure(size = (400, 400), figure_padding = 0)
     ax11 = Axis(fig[1, 1], aspect = DataAspect())
 
-    hm = qgh.heatmap!(ax11, slms_exact[end], image_resolution)
+    hm = HoloGrad.heatmap!(ax11, slms_exact[end], image_resolution)
     hidedecorations!(ax11)
 
     xs = layout.points[:, 1] * image_resolution
@@ -87,7 +87,7 @@ begin
     
     slm, cost, B = match_image(layout, slm, algorithm) 
     dxdt = layout_end.points - layout.points
-    Δϕ = qgh.get_dϕdt(layout, slm, B, dxdt, 15)
+    Δϕ = HoloGrad.get_dϕdt(layout, slm, B, dxdt, 15)
 
     fig = Figure(size = (400, 400), figure_padding = 0)
     ax11 = Axis(fig[1, 1], aspect = DataAspect())

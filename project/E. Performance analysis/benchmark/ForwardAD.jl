@@ -1,4 +1,4 @@
-using qgh
+using HoloGrad
 using Random
 using LinearAlgebra
 using BenchmarkTools
@@ -24,9 +24,9 @@ using Test
     println("WGS $atype time:")
     @btime CUDA.@sync match_image($layout, $slm, $algorithm)
     println("implicit $atype time:")
-    @btime CUDA.@sync qgh.get_dϕdt($layout, $slm, $B, $dxdt)
+    @btime CUDA.@sync HoloGrad.get_dϕdt($layout, $slm, $B, $dxdt)
     println("expand $atype time:")
-    @btime CUDA.@sync qgh.get_dϕdt($layout, $slm, $B, $dxdt, $aditers)
+    @btime CUDA.@sync HoloGrad.get_dϕdt($layout, $slm, $B, $dxdt, $aditers)
 end
 
 @testset "circle" for atype in [Array, CuArray]
@@ -48,7 +48,7 @@ end
     println("WGS $atype time:")
     @btime CUDA.@sync match_image($layout, $slm, $algorithm)
     println("implicit $atype time:")
-    @btime CUDA.@sync qgh.get_dϕdt($layout, $slm, $B, $dxdt)
+    @btime CUDA.@sync HoloGrad.get_dϕdt($layout, $slm, $B, $dxdt)
     println("expand $atype time:")
-    @btime CUDA.@sync qgh.get_dϕdt($layout, $slm, $B, $dxdt, $aditers)
+    @btime CUDA.@sync HoloGrad.get_dϕdt($layout, $slm, $B, $dxdt, $aditers)
 end

@@ -1,5 +1,5 @@
-using qgh
-using qgh: cft, icft
+using HoloGrad
+using HoloGrad: cft, icft
 using Test
 using BenchmarkTools
 

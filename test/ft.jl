@@ -1,5 +1,5 @@
 using Test
-using qgh: ContinuousLayout, preloc_cft, cft, icft
+using HoloGrad: ContinuousLayout, preloc_cft, cft, icft
 using LinearAlgebra
 using Random
 

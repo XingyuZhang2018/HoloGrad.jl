@@ -1,4 +1,4 @@
-using qgh
+using HoloGrad
 using CairoMakie
 using Random
 
@@ -23,17 +23,17 @@ begin # plot exact half body image
 
     fig = Figure(size = (500, 500))
     ax1 = Axis(fig[1, 1], aspect = DataAspect())
-    qgh.heatmap!(ax1, slms_exact[1], image_resolution)
-    areas = qgh.find_area(layout, layout_end, image_resolution, 5)
+    HoloGrad.heatmap!(ax1, slms_exact[1], image_resolution)
+    areas = HoloGrad.find_area(layout, layout_end, image_resolution, 5)
     area = areas[1]
-    qgh.plot_rectange!(ax1, area)
+    HoloGrad.plot_rectange!(ax1, area)
     display(fig)
 
     fig = Figure(size = (1000, 200))
     for i in 1:5
         axi = Axis(fig[1, i], aspect = DataAspect(), limits = (70, 100, 810, 840))
-        qgh.heatmap!(axi, slms_exact[i], image_resolution)
-        qgh.plot_rectange!(axi, areas[1])
+        HoloGrad.heatmap!(axi, slms_exact[i], image_resolution)
+        HoloGrad.plot_rectange!(axi, areas[1])
     end
     display(fig)
 end
@@ -50,8 +50,8 @@ begin # plot flow half body image
     fig = Figure(size = (1000, 200))
     for i in 1:5
         axi = Axis(fig[1, i], aspect = DataAspect(), limits = (70, 100, 810, 840))
-        qgh.heatmap!(axi, slms_flow[i], image_resolution)
-        qgh.plot_rectange!(axi, areas[1])
+        HoloGrad.heatmap!(axi, slms_flow[i], image_resolution)
+        HoloGrad.plot_rectange!(axi, areas[1])
     end
     display(fig)
 end

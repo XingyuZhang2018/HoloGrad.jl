@@ -1,6 +1,6 @@
 using Test
 using CUDA
-using qgh: ContinuousLayout, SLM
+using HoloGrad: ContinuousLayout, SLM
 
 @testset "Layout with $atype" for atype in test_atypes
     points = atype(rand(5, 2))

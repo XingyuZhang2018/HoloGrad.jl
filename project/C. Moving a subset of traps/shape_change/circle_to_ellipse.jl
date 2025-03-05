@@ -1,4 +1,4 @@
-using qgh
+using HoloGrad
 using CairoMakie
 using Random
 using LinearAlgebra
@@ -21,8 +21,8 @@ begin # slms exact move
     #benchmark
     layouts_exact, slms_exact = evolution_slm_direct(layout, layout_end, slm, algorithm; keypoints)
 
-    # qgh.heatmap(slms_exact[[1,end]], image_resolution)
-    # qgh.image_animation(slms_exact, image_resolution; 
+    # HoloGrad.heatmap(slms_exact[[1,end]], image_resolution)
+    # HoloGrad.image_animation(slms_exact, image_resolution; 
     #                     file = "project/C. Moving a subset of traps/shape_change/circle_to_ellipse_exact_move.mp4")
 end
 
@@ -30,19 +30,19 @@ begin # plot exact ϕ and B
     image_resolution = N*3
 
     fig = Figure(size = (500, 200))
-    areas = qgh.find_area(layout, layout_end, image_resolution, 2; area_size=0.03)
+    areas = HoloGrad.find_area(layout, layout_end, image_resolution, 2; area_size=0.03)
 
     ax11 = Axis(fig[1, 1], aspect = DataAspect(), title = L"B_0")
-    hm = qgh.heatmap!(ax11, slms_exact[1], image_resolution)
+    hm = HoloGrad.heatmap!(ax11, slms_exact[1], image_resolution)
     hidedecorations!(ax11)
     Colorbar(fig[1, 1][1, 2], hm)
-    qgh.plot_rectange!(ax11, areas[1])
+    HoloGrad.plot_rectange!(ax11, areas[1])
 
     ax12 = Axis(fig[1, 2], aspect = DataAspect(), title = L"B_1")
-    hm = qgh.heatmap!(ax12, slms_exact[end], image_resolution)
+    hm = HoloGrad.heatmap!(ax12, slms_exact[end], image_resolution)
     hidedecorations!(ax12)
     Colorbar(fig[1, 2][1, 2], hm)
-    qgh.plot_rectange!(ax12, areas[end])
+    HoloGrad.plot_rectange!(ax12, areas[end])
 
     # display(fig)
     save("project/C. Moving a subset of traps/shape_change/circle_to_ellipse_B.pdf", fig)
@@ -54,21 +54,21 @@ begin # plot flow move image
                                                  aditers=15,
                                                  ifimplicit=false,
                                                  α = 0.5, β = 1)
-    qgh.image_animation(slms_flow, image_resolution; 
+    HoloGrad.image_animation(slms_flow, image_resolution; 
                         file = "project/C. Moving a subset of traps/shape_change/circle_to_ellipse_flow_move.mp4")
 end
 
 begin # decay
     image_resolution = 120
-    areas = qgh.find_area(layout, layout_end, image_resolution, length(slms_flow) - 1; area_size=0.01)
+    areas = HoloGrad.find_area(layout, layout_end, image_resolution, length(slms_flow) - 1; area_size=0.01)
 
     fig = Figure(size = (400, 250))
     fa = fig[1, 1] = GridLayout()
     for (i, j) in zip(1:6, LinRange(1, length(slms_flow), 6))
         axi = Axis(fa[1, i], aspect = DataAspect())
-        qgh.heatmap!(axi, slms_flow[round(Int,j)], image_resolution)
+        HoloGrad.heatmap!(axi, slms_flow[round(Int,j)], image_resolution)
         hidedecorations!(axi)
-        qgh.plot_rectange!(axi, areas[round(Int,j)])
+        HoloGrad.plot_rectange!(axi, areas[round(Int,j)])
     end
     colgap!(fa, 5)
     
@@ -82,12 +82,12 @@ begin # decay
     fb = fig[2, 1] = GridLayout()
     image_resolution = 1000
 
-    areas = qgh.find_area(layout, layout_end, image_resolution, length(slms_flow) - 1; area_size=0.01)
+    areas = HoloGrad.find_area(layout, layout_end, image_resolution, length(slms_flow) - 1; area_size=0.01)
     positions = []
     intensities = Array{Float64}([])
     
     for i in 1:length(slms_flow)
-        intensity, position = qgh.find_max_intensity(slms_flow[i], areas[i], image_resolution, image_resolution)
+        intensity, position = HoloGrad.find_max_intensity(slms_flow[i], areas[i], image_resolution, image_resolution)
         push!(positions, position)
         push!(intensities, intensity)
     end

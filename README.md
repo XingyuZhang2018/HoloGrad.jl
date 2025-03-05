@@ -1,7 +1,7 @@
-# Dynamic Hologram Generation with Automatic Differentiation
+# HoloGrad.jl: Dynamic Hologram Generation with Gradient
 
-[![Build Status](https://github.com/XingyuZhang2018/qgh/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/XingyuZhang2018/qgh.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![codecov](https://codecov.io/gh/XingyuZhang2018/qgh/graph/badge.svg?token=jCbMe1oSPj)](https://codecov.io/gh/XingyuZhang2018/qgh)
+[![Build Status](https://github.com/XingyuZhang2018/HoloGrad/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/XingyuZhang2018/HoloGrad.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![codecov](https://codecov.io/gh/XingyuZhang2018/HoloGrad/graph/badge.svg?token=jCbMe1oSPj)](https://codecov.io/gh/XingyuZhang2018/HoloGrad)
 
 
 This is a Julia project to evolute the hologram using gradient. 
@@ -15,16 +15,16 @@ There are four main parts in this project:
 
 ## Installation
 ```shell
-> git clone https://github.com/XingyuZhang2018/qgh
+> git clone https://github.com/XingyuZhang2018/HoloGrad.jl
 ```
 move to the file and run `julia REPL`, press `]` into `Pkg REPL`
 ```julia
 (@v1.11) pkg> activate .
-Activating project at `~/qgh`
+Activating project at `~/HoloGrad.jl`
 ```
 
 ```julia
-(qgh) pkg> instantiate
+(HoloGrad) pkg> instantiate
 ```
 
 ## Basic Usage Example: Continuous Evolution of Butterfly Graph
@@ -36,14 +36,14 @@ Here's a step-by-step guide to generate the continuous evolution animation:
 $ julia
 
 (@v1.11) pkg> activate .
-Activating project at `~/qgh`
+Activating project at `~/HoloGrad`
 
-(qgh) pkg> 
+(HoloGrad) pkg> 
 ```
 ### Load required packages
 press `Backspace` into `Julia REPL`
 ```julia
-julia> using qgh
+julia> using HoloGrad
 julia> using Random
 julia> using CUDA  # Optional for GPU acceleration
 ```
@@ -77,10 +77,10 @@ julia> algorithm = WGS(maxiter=100, verbose=true, show_every=10, tol=1e-10, rati
 ```julia
 julia> layouts, slms = evolution_slm_flow(layout, layout_new, slm, algorithm)
 ```
-more details about the `evolution_slm_flow` function can be found in the [annotation](https://github.com/XingyuZhang2018/qgh/blob/main/src/evolution/gradient_flow.jl#L127-L153).
+more details about the `evolution_slm_flow` function can be found in the [annotation](https://github.com/XingyuZhang2018/HoloGrad/blob/main/src/evolution/gradient_flow.jl#L127-L153).
 ###  Generate and save animation
 ```julia
-julia> qgh.image_animation(slms, 200; file = "example/butterflycontinuous.gif")
+julia> HoloGrad.image_animation(slms, 200; file = "example/butterflycontinuous.gif")
 ```
 
 The generated animation will look like this:

@@ -1,4 +1,4 @@
-using qgh
+using HoloGrad
 using CairoMakie
 using Random
 using CUDA
@@ -44,12 +44,12 @@ begin
     fig = Figure(size = (500, 200))
 
     ax11 = Axis(fig[1, 1], aspect = DataAspect())
-    hm = qgh.heatmap!(ax11, slm_1, image_resolution)
+    hm = HoloGrad.heatmap!(ax11, slm_1, image_resolution)
     hidedecorations!(ax11)
     Colorbar(fig[1, 1][1, 2], hm)
 
     ax12 = Axis(fig[1, 2], aspect = DataAspect())
-    hm = qgh.heatmap!(ax12, slm_2, image_resolution)
+    hm = HoloGrad.heatmap!(ax12, slm_2, image_resolution)
     hidedecorations!(ax12)
     Colorbar(fig[1, 2][1, 2], hm)
 

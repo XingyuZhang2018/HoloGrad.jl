@@ -1,4 +1,4 @@
-using qgh
+using HoloGrad
 using CairoMakie
 using Random
 
@@ -28,7 +28,7 @@ begin # plot exact ϕ and B
     Colorbar(fig[1, 1][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]), ticklabelsize = 12)
 
     ax12 = Axis(fig[1, 2], aspect = DataAspect(), title = L"B_0")
-    hm = qgh.heatmap!(ax12, slms_exact[1], image_resolution)
+    hm = HoloGrad.heatmap!(ax12, slms_exact[1], image_resolution)
     Colorbar(fig[1, 2][1, 2], hm, ticklabelsize = 12)
 
     ax21 = Axis(fig[2, 1], aspect = DataAspect(), title = L"\phi_1")
@@ -37,7 +37,7 @@ begin # plot exact ϕ and B
     Colorbar(fig[2, 1][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]), ticklabelsize = 12)
 
     ax22 = Axis(fig[2, 2], aspect = DataAspect(), title = L"B_1")
-    hm = qgh.heatmap!(ax22, slms_exact[end], image_resolution)
+    hm = HoloGrad.heatmap!(ax22, slms_exact[end], image_resolution)
     Colorbar(fig[2, 2][1, 2], hm, ticklabelsize = 12)
 
     # display(fig)
@@ -45,7 +45,7 @@ begin # plot exact ϕ and B
 end
 
 begin # plot flow implicit
-    layouts_flow, slms_flow_implicit = qgh.evolution_slm_pure_flow(layout, layout_end, slm, algorithm; 
+    layouts_flow, slms_flow_implicit = HoloGrad.evolution_slm_pure_flow(layout, layout_end, slm, algorithm; 
                                                           interps=1, 
                                                           aditers=5,
                                                           ifimplicit=true)
@@ -53,13 +53,13 @@ begin # plot flow implicit
     fig = Figure(size = (580, 150))
 
     ax11 = Axis(fig[1, 1], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{exact}}")
-    Δϕ_exact = qgh.ϕdiff(slms_exact[end], slms_exact[1])
+    Δϕ_exact = HoloGrad.ϕdiff(slms_exact[end], slms_exact[1])
     hm = CairoMakie.heatmap!(ax11, 1:N, 1:N, Δϕ_exact, colorrange = (-pi, pi))
     hidedecorations!(ax11)
     Colorbar(fig[1, 1][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]))
 
     ax12 = Axis(fig[1, 2], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{flow}}")
-    Δϕ_flow = qgh.ϕdiff(slms_flow_implicit[end], slms_flow_implicit[1]) 
+    Δϕ_flow = HoloGrad.ϕdiff(slms_flow_implicit[end], slms_flow_implicit[1]) 
     hm = CairoMakie.heatmap!(ax12, 1:N, 1:N, Δϕ_flow, colorrange = (-pi, pi))
     hidedecorations!(ax12)
     Colorbar(fig[1, 2][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]))
@@ -73,7 +73,7 @@ begin # plot flow implicit
 end
 
 begin # plot flow without implicit
-    layouts_flow, slms_flow = qgh.evolution_slm_pure_flow(layout, layout_end, slm, algorithm; 
+    layouts_flow, slms_flow = HoloGrad.evolution_slm_pure_flow(layout, layout_end, slm, algorithm; 
                                                           interps=1, 
                                                           aditers=1,
                                                           ifimplicit=false)
@@ -81,13 +81,13 @@ begin # plot flow without implicit
     fig = Figure(size = (1400, 400))
 
     ax11 = Axis(fig[1, 1], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{exact}}")
-    Δϕ_exact = qgh.ϕdiff(slms_exact[end], slms_exact[1])
+    Δϕ_exact = HoloGrad.ϕdiff(slms_exact[end], slms_exact[1])
     hm = CairoMakie.heatmap!(ax11, 1:N, 1:N, Δϕ_exact, colorrange = (-pi, pi))
     hidedecorations!(ax11)
     Colorbar(fig[1, 1][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]))
 
     ax12 = Axis(fig[1, 2], aspect = DataAspect(), title = L"\Delta \phi_{\mathrm{flow}}")
-    Δϕ_flow = qgh.ϕdiff(slms_flow[end], slms_flow[1]) 
+    Δϕ_flow = HoloGrad.ϕdiff(slms_flow[end], slms_flow[1]) 
     hm = CairoMakie.heatmap!(ax12, 1:N, 1:N, Δϕ_flow, colorrange = (-pi, pi))
     hidedecorations!(ax12)
     Colorbar(fig[1, 2][1, 2], hm, ticks = (-pi:pi/2:pi, [L"-\pi", L"-\frac{\pi}{2}", L"0", L"\frac{\pi}{2}", L"\pi"]))

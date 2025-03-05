@@ -1,10 +1,10 @@
-using qgh
+using HoloGrad
 using Test
 using CUDA
 
 test_atypes = [Array]
 
-@testset "qgh.jl" begin
+@testset "HoloGrad.jl" begin
     include("configuration.jl")
     include("ft.jl")
     include("wgs.jl")

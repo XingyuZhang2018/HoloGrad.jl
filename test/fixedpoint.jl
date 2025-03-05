@@ -1,5 +1,5 @@
-using qgh
-using qgh: fixed_point_map, get_dϕBdt
+using HoloGrad
+using HoloGrad: fixed_point_map, get_dϕBdt
 using ForwardDiff
 using KrylovKit
 using Test
